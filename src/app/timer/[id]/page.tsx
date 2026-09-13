@@ -162,7 +162,7 @@ export default function TimerPage({
 
   useEffect(() => {
     setNote(activeSession?.note ?? "");
-  }, [activeSession?.id]);
+  }, [activeSession?.id,activeSession?.note]);
 
   useEffect(() => {
     if (!loadedOnce) return;

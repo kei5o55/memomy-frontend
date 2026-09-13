@@ -161,16 +161,11 @@ export default function UserProfilePage() {
       })
       .filter((c) => completedProjects.some((p) => p.id === c.projectId))
       .sort((a, b) => b.endedAt - a.endedAt);
-  }, [latestCommits, completedProjects, isApiMode]);
+  }, [latestCommits, completedProjects]);
 
   // ローカルモード時のみ: BlobからのURL生成とクリーンアップ
   useEffect(() => {
     // APIモード時は URL.createObjectURL の生成自体をスキップ
-    if (isApiMode) {
-      setImageUrlMap({});
-      return;
-    }
-
     const newMap: Record<string, string> = {};
 
     imageCommits.forEach((commit) => {
@@ -179,7 +174,14 @@ export default function UserProfilePage() {
       }
     });
 
-    setImageUrlMap(newMap);
+    queueMicrotask(() => {
+      if(isApiMode) {
+      setImageUrlMap({});
+      return;
+      }else{
+        setImageUrlMap(newMap);
+      }
+    })
 
     // アンマウント時および依存配列変更時に不要になった Object URL を確実に解放
     return () => {
@@ -187,7 +189,7 @@ export default function UserProfilePage() {
         URL.revokeObjectURL(url);
       });
     };
-  }, [imageCommits, isApiMode]);
+  }, [imageCommits]);
 
   if (loading) {
     return (

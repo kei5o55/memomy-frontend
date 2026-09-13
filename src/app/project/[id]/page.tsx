@@ -41,11 +41,13 @@ export default function ProjectDetailPage({
   const projectId = resolvedParams.id;
   const [projectNameInput, setProjectNameInput] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
+  const [prevProjectId, setPrevProjectId] = useState<string | null>(null);
   
   // ギャラリー用: Blobから生成した Object URL を安全に保持する State
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
 
   const refresh = async () => {
+    setLoading(true);
     const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
     const [nextProjects, nextCommits] = await Promise.all([
@@ -55,13 +57,12 @@ export default function ProjectDetailPage({
 
     setProjects(nextProjects);
     setCommitsAll(nextCommits);
+    setLoading(false);
   };
 
   useEffect(() => {
     void (async () => {
-      setLoading(true);
       await refresh();
-      setLoading(false);
     })();
   }, []);
 
@@ -84,17 +85,17 @@ export default function ProjectDetailPage({
     return projects.find((p) => p.id === projectId) ?? null;
   }, [projects, projectId]);
 
-  useEffect(() => {
-    if (!project) return;
+  if (project && project.id !== prevProjectId) {// プロジェクトが切り替わった場合にフォームの初期値を更新
+    setPrevProjectId(project.id);
     setProjectNameInput(project.name ?? "");
     setWorkMinutesInput(
-      project.pomodoroWorkMinutes ? String(project.pomodoroWorkMinutes) : "",
+      project.pomodoroWorkMinutes ? String(project.pomodoroWorkMinutes) : ""
     );
     setBreakMinutesInput(
-      project.pomodoroBreakMinutes ? String(project.pomodoroBreakMinutes) : "",
+      project.pomodoroBreakMinutes ? String(project.pomodoroBreakMinutes) : ""
     );
     setProjectMemoInput(project.memo ?? "");
-  }, [project]);
+  }
 
   const commits = useMemo(() => {
     if (!projectId) return [];
@@ -124,19 +125,26 @@ export default function ProjectDetailPage({
 
   // Object URL の生成とクリーンアップ（メモリリーク・レンダリングエラーの防止）
   useEffect(() => {
-    const urls: Record<string, string> = {};
+      let active = true;
+      const urls: Record<string, string> = {};
 
-    commitsWithImage.forEach((c) => {
-      if (c.image?.blob) {
-        urls[c.id] = URL.createObjectURL(c.image.blob);
-      }
-    });
+      commitsWithImage.forEach((c) => {
+        if (c.image?.blob) {
+          urls[c.id] = URL.createObjectURL(c.image.blob);
+        }
+      });
 
-    setImageUrls(urls);
+      // マイクロタスクに逃がして同期呼出しを防ぐ
+      queueMicrotask(() => {
+        if (active) {
+          setImageUrls(urls);
+        }
+      });
 
-    return () => {
-      Object.values(urls).forEach((url) => URL.revokeObjectURL(url));
-    };
+      return () => {
+        active = false;
+        Object.values(urls).forEach((url) => URL.revokeObjectURL(url));
+      };
   }, [commitsWithImage]);
 
   const totalMs = useMemo(

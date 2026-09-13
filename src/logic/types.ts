@@ -99,6 +99,16 @@ export type DaySchedule = {
   projectId?: string;
 };
 
+export type ApiDayScheduleRes = {
+  id: string;
+  date: string; // YYYY-MM-DD
+  title: string;
+  start_hour: number; // 0~23
+  start_minute: number;
+  end_hour: number;
+  end_minute: number;
+}
+
 // カレンダー描画用に組み立てたセルデータ
 export type CalendarCell = {
   date: string; // "YYYY-MM-DD"

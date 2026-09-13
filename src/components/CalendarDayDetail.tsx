@@ -69,7 +69,7 @@ export default function CalendarDayDetail({
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [schedules, setSchedules] = useState<DaySchedule[]>(initialSchedules);
 
-  // 初回マウント時または モード変更時にスケジュールを取得
+  // 初回マウント時にスケジュールを取得
   useEffect(() => {
     let cancelled = false;
 
@@ -92,7 +92,7 @@ export default function CalendarDayDetail({
     return () => {
       cancelled = true;
     };
-  }, [isApiMode]);
+  }, []);
 
   // スケジュール追加ハンドラー
   const handleAddSchedule = async (newSchedule: DaySchedule) => {

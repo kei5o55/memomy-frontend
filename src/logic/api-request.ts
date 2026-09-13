@@ -1,5 +1,6 @@
-import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput } from "./api-types";
-import type { Project, ApiProjectResponse, Commit, DaySchedule, CalendarMemo } from "./types";
+import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput, ApiCalendarMemosRes } from "./api-types";
+import type { Project, Commit, DaySchedule, CalendarMemo,  } from "./types";
+import type { ApiDayScheduleRes,ApiProjectResponse } from "./api-types";
 
 const BASE_URL = 'http://localhost:3001/api/v1';
 
@@ -12,11 +13,11 @@ export const loadCommits = async (): Promise<Commit[]> => {
       throw new Error(`HTTPエラー! status: ${response.status}`);
     }
 
-    const rawData = await response.json();
+    const rawData:Commit[] = await response.json();
 
     console.log("送られたデータ : ", rawData);
 
-    const commits: Commit[] = rawData.map((item: any) => {
+    const commits: Commit[] = rawData.map((item:Commit) => {
       // 1. ISO文字列 (または数数値) を Date オブジェクト経由でミリ秒数値に変換
       const startedAtMs = typeof item.startedAt === 'number' 
         ? item.startedAt 
@@ -256,10 +257,10 @@ export const loadDaySchedules = async (): Promise<DaySchedule[]> => {
       throw new Error(`httpエラー status: ${response.status}`);
     }
 
-    const rawData = await response.json();
+    const rawData :ApiDayScheduleRes[]=await response.json();
 
     // ⭕️ item.start_hour (スネークケース) から受け取って TS 型に変換
-    const daySchedules: DaySchedule[] = rawData.map((item: any) => ({
+    const daySchedules: DaySchedule[] = rawData.map((item) => ({
       id: item.id,
       date: item.date,
       title: item.title,
@@ -330,10 +331,10 @@ export const loadCalendarMemos = async (): Promise<CalendarMemo[]> => {
       throw new Error(`エラー: status: ${response.status}`);
     }
 
-    const rawData = await response.json();
+    const rawData:ApiCalendarMemosRes[]= await response.json();
 
     // ⭕️ item.created_at (スネークケース) から受け取る
-    const calendarMemos: CalendarMemo[] = rawData.map((item: any) => ({
+    const calendarMemos: CalendarMemo[] = rawData.map((item:ApiCalendarMemosRes) => ({
       id: item.id,
       date: item.date,
       text: item.text,

@@ -141,7 +141,7 @@ export const dbPromise =
           }
         },
       })
-    : Promise.resolve(null as any);
+    : Promise.resolve(null);
 
 // ===== Projects =====
 export async function loadProjectsIdb(): Promise<Project[]> {

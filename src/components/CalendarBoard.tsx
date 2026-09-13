@@ -80,7 +80,7 @@ export default function CalendarPage({
     return () => {
       cancelled = true;
     };
-  }, [projectsFromParent, isApiMode]);
+  }, [projectsFromParent]);
 
   const handleAddMemo = async (date: string) => {
     const text = window.prompt(`${date} のメモを入力してください`);

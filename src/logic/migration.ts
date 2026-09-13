@@ -86,13 +86,13 @@ export async function migrateIdbToPostgres(): Promise<MigrationResult> {
       importedProjectsCount: data.imported_projects_count,
       importedCommitsCount: data.imported_commits_count,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Migration failed:", err);
     return {
       success: false,
       importedProjectsCount: 0,
       importedCommitsCount: 0,
-      error: err.message || "未知のエラーが発生しました",
+      //error: err.message || "未知のエラーが発生しました",
     };
   }
 }

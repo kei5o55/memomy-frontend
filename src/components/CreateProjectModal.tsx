@@ -1,6 +1,6 @@
 //src/components/CreateProjectModal.tsx
 // ここはプロジェクト作成用のモーダル。ProjectsPageから呼び出す
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { NewProjectInput } from "../logic/api-types";
 
 
@@ -30,17 +30,6 @@ export default function CreateProjectModal({ open, onClose, onCreate }: Props) {
   }
 
   const canCreate = useMemo(() => name.trim().length > 0, [name]);
-
-  // 開いたときにフォーム初期化
-  useEffect(() => {
-    if (!open) return;
-    setName("");
-    setDueDate("");
-    setMemo("");
-    setTargetHours("");
-    setPomodoroWorkMinutes("");
-    setPomodoroBreakMinutes("");
-  }, [open]);
 
   if (!open) return null;
 

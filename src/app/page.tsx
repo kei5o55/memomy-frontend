@@ -5,7 +5,6 @@ import type { NewProjectInput } from "../logic/api-types";
 import CreateProjectModal from "../components/CreateProjectModal";
 import type { Project, Commit, WorkSession } from "../logic/types";
 import CalendarBoard from "../components/CalendarBoard";
-import HealthCheckButton from "../components/HealthCheckButton";
 import CommitModal, { type DraftCommit } from "../components/CommitModal"; 
 import {
   loadProjectsIdb,
@@ -60,14 +59,10 @@ export default function ProjectsPage() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [sessionsAll, setSessionsAll] = useState<WorkSession[]>([]);
-  const [hasMounted, setHasMounted] = useState(false);
+  const [hasMounted,] = useState(true);
 
   // 表示するタブ（active: 進行中, completed: 完了済み）
   const [activeTab, setActiveTab] = useState<"calender"|"active" | "completed">("active");
-
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
 
   const refresh = async () => {
     // 環境変数によって呼び出す関数を切り替える
@@ -620,10 +615,11 @@ export default function ProjectsPage() {
       </section>
 
       <CreateProjectModal
+        key={isCreateOpen ? "open" : "closed"} // モーダルの開閉時に強制的に再マウントさせるための key
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onCreate={onCreate}
-        //onCreate={onCreate2}　//バックエンド連携の時はこっちにスイッチ
+        //onCreate={onCreate2} //バックエンド連携の時はこっちにスイッチ
       />
 
       {/* ダイレクトコミットモーダル */}
@@ -702,7 +698,6 @@ export default function ProjectsPage() {
         {/*<section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
           <ContributionHeatmap commits={commitsAll} title="All Activity" />
         </section>*/}
-        <HealthCheckButton></HealthCheckButton>
         {/*<DataMigrationButton></DataMigrationButton>*/}
       </div>
     </main>

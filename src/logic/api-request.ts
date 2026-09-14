@@ -17,7 +17,7 @@ export const loadCommits = async (): Promise<Commit[]> => {
 
     console.log("送られたデータ : ", rawData);
 
-    const commits: Commit[] = rawData.map((item:Commit) => {
+    const commits: Commit[] = rawData.map((item:Commit) => {//バックエンドでキャメルケースにパースして送ってる（Commitだけ）
       // 1. ISO文字列 (または数数値) を Date オブジェクト経由でミリ秒数値に変換
       const startedAtMs = typeof item.startedAt === 'number' 
         ? item.startedAt 
@@ -157,12 +157,12 @@ export const createProject = async (inputData: NewProjectInput): Promise<Project
       body: JSON.stringify({
         project: {
           name: inputData.name,
-          dueDate: inputData.dueDate,
+          due_date: inputData.dueDate,
           completed: false,
           memo: inputData.memo,
-          targetHours: inputData.targetHours,
-          pomodoroBreakMinutes: inputData.pomodoroBreakMinutes,
-          pomodoroWorkMinutes: inputData.pomodoroWorkMinutes,
+          target_hours: inputData.targetHours,
+          pomodoro_break_minutes: inputData.pomodoroBreakMinutes,
+          pomodoro_work_minutes: inputData.pomodoroWorkMinutes,
         },
       }),
     });

@@ -1,8 +1,5 @@
-export type ConfirmMode = "project" | "commit" | "schedule" | "memo";
-
 type Props = {
   open:boolean;
-  mode: ConfirmMode;
   title: string;
   message: string;
   onConfirm: () => Promise<void> | void;
@@ -10,9 +7,17 @@ type Props = {
   isLoading?: boolean;
 };
 
+
+/*<ConfirmModal 
+    open={Boolean(deleteTarget)}
+    title="プロジェクトの削除"
+    message={`「${deleteTarget?.name || ""}」を削除してもよろしいですか？\nこの操作は取り消せません。`}
+    onClose={() => setDeleteTarget(null)}
+    onConfirm={handleConfirmDelete}
+   />*/
+
 export default function ConfirmModal({
   open,
-  mode,
   title,
   message,
   onConfirm,

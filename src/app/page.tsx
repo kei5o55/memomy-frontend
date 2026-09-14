@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { NewProjectInput } from "../logic/api-types";
 import CreateProjectModal from "../components/CreateProjectModal";
 import type { Project, Commit, WorkSession } from "../logic/types";
-import ConfirmModal from "../components/ConfirmComponent";
+import ConfirmModal from "../components/ConfirmModal";
 import CalendarBoard from "../components/CalendarBoard";
 import CommitModal, { type DraftCommit } from "../components/CommitModal"; 
 import {
@@ -603,7 +603,6 @@ export default function ProjectsPage() {
       {/* 削除確認モーダル */}
       <ConfirmModal 
         open={Boolean(deleteTarget)}
-        mode="project"
         title="プロジェクトの削除"
         message={`「${deleteTarget?.name || ""}」を削除してもよろしいですか？\nこの操作は取り消せません。`}
         onClose={() => setDeleteTarget(null)}

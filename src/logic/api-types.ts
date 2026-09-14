@@ -1,6 +1,6 @@
 import type { CalendarMemo, Commit, DaySchedule, Project } from "./types";
 
-export type NewProjectInput = Omit<Project,"id">
+export type NewProjectInput = Omit<Project,"id" | "createdAt" | "completed">
 
 
 //rails側で一意のuuidを付けるため、インプットはid無しで作る

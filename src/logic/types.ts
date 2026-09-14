@@ -31,17 +31,6 @@ export type Project = {
   completed:boolean;
 };
 
-export type ApiProjectResponse = {
-  id: string;
-  name: string;
-  due_date: string | null;
-  memo: string | null;
-  created_at: string;
-  target_hours?: number;
-  pomodoro_work_minutes?: number;
-  pomodoro_break_minutes?: number;
-  completed: boolean;
-};
 
 
 export type WorkSessionStatus = "running" | "paused";
@@ -99,15 +88,7 @@ export type DaySchedule = {
   projectId?: string;
 };
 
-export type ApiDayScheduleRes = {
-  id: string;
-  date: string; // YYYY-MM-DD
-  title: string;
-  start_hour: number; // 0~23
-  start_minute: number;
-  end_hour: number;
-  end_minute: number;
-}
+
 
 // カレンダー描画用に組み立てたセルデータ
 export type CalendarCell = {

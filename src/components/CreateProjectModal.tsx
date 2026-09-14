@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { NewProjectInput } from "../logic/api-types";
 
 
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -16,18 +17,9 @@ export default function CreateProjectModal({ open, onClose, onCreate }: Props) {
   const [memo, setMemo] = useState("");
 
   // ⭕️ すべて string で管理（初期値は空文字 ""）
-  const [targetHours, setTargetHours] = useState("");
-  const [pomodoroWorkMinutes, setPomodoroWorkMinutes] = useState("");
-  const [pomodoroBreakMinutes, setPomodoroBreakMinutes] = useState("");
-
-  // 全角数字を半角数字に変換し、数字以外を除去するヘルパー関数
-  function formatNumberInput(str: string) {
-    const halfWidth = str.replace(/[０-９]/g, (s) =>
-      String.fromCharCode(s.charCodeAt(0) - 0xfee0),
-    );
-    // 数字以外の文字を除去
-    return halfWidth.replace(/[^0-9]/g, "");
-  }
+  const [targetHours, setTargetHours] = useState<number>(0);
+  const [pomodoroWorkMinutes, setPomodoroWorkMinutes] = useState<number>(0);
+  const [pomodoroBreakMinutes, setPomodoroBreakMinutes] = useState<number>(0);
 
   const canCreate = useMemo(() => name.trim().length > 0, [name]);
 
@@ -109,7 +101,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: Props) {
                 min={1}
                 step={1}
                 value={targetHours}
-                onChange={(e) => setTargetHours(formatNumberInput(e.target.value))}
+                onChange={(e) => setTargetHours(Number(e.target.value))}
                 placeholder="例: 10"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
               />
@@ -126,7 +118,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: Props) {
                 min={1}
                 step={1}
                 value={pomodoroWorkMinutes}
-                onChange={(e) => setPomodoroWorkMinutes(formatNumberInput(e.target.value))}
+                onChange={(e) => setPomodoroWorkMinutes(Number(e.target.value))}
                 placeholder="例: 25"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
               />
@@ -141,7 +133,7 @@ export default function CreateProjectModal({ open, onClose, onCreate }: Props) {
                 min={1}
                 step={1}
                 value={pomodoroBreakMinutes}
-                onChange={(e) => setPomodoroBreakMinutes(formatNumberInput(e.target.value))}
+                onChange={(e) => setPomodoroBreakMinutes(Number(e.target.value))}
                 placeholder="例: 5"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
               />

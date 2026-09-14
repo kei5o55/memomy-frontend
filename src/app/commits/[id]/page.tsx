@@ -141,29 +141,34 @@ export default function CommitDetailPage({
 
   const handleDeleteCommit = async () => {
     if (!commit) return;
-    //if (!window.confirm("このコミットを削除しますか？")) return;
+
+    setLoading(true);
 
     const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
-    if (isApiMode) {
-      // 🌐 API モード: Rails バックエンドへ DELETE リクエスト送信
-      const success = await deleteCommit(commit.id);
+    try {
+      if (isApiMode) {
+        // 🌐 API モード: Rails バックエンドへ DELETE リクエスト送信
+        const success = await deleteCommit(commit.id);
 
-      if (!success) {
-        alert("コミットの削除に失敗しました。時間をおいて再度お試しください。");
-        return;
+        if (!success) {
+          alert("コミットの削除に失敗しました。時間をおいて再度お試しください。");
+          return;
+        }
+      } else {
+        // 💾 ローカルモード: IndexedDB の配列から取り除いて上書き保存
+        const nextCommits = commits.filter((c) => c.id !== commit.id);
+        await saveCommitsIdb(nextCommits);
       }
-    } else {
-      // 💾 ローカルモード: IndexedDB の配列から取り除いて上書き保存
-      const nextCommits = commits.filter((c) => c.id !== commit.id);
-      await saveCommitsIdb(nextCommits);
-    }
 
-    // 削除成功時のみ、プロジェクト詳細画面またはトップへリダイレクト
-    if (project) {
-      router.push(`/project/${project.id}`);
-    } else {
-      router.push("/");
+      // 削除成功時のみリダイレクト
+      if (project) {
+        router.push(`/project/${project.id}`);
+      } else {
+        router.push("/");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 

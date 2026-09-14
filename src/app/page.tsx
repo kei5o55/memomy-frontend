@@ -291,22 +291,31 @@ export default function ProjectsPage() {
   };
 
   // モーダル側で確定ボタンが押された時の実行関数
+  // モーダル側で確定ボタンが押された時の実行関数
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
+
+    setLoading(true);
 
     const id = deleteTarget.id;
     const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
-    if (isApiMode) {
-      const success = await deleteProject(id);
-      if (success) {
-        setProjects((prev) => prev.filter((p) => p.id !== id));
+    try {
+      if (isApiMode) {
+        const success = await deleteProject(id);
+
+        if (!success) {
+          alert("プロジェクトの削除に失敗しました。時間をおいて再度お試しください。");
+          return;
+        }
       } else {
-        alert("プロジェクトの削除に失敗しました。時間をおいて再度お試しください。");
+        await deleteProjectDb(id);
       }
-    } else {
-      await deleteProjectDb(id);
+
+      // API / IndexedDB どちらでも、成功したら画面上から削除
       setProjects((prev) => prev.filter((p) => p.id !== id));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -607,6 +616,7 @@ export default function ProjectsPage() {
         message={`「${deleteTarget?.name || ""}」を削除してもよろしいですか？\nこの操作は取り消せません。`}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
+        isLoading={loading}
       />
 
       {/* ダイレクトコミットモーダル */}

@@ -1,8 +1,7 @@
-import React from "react";
-
 export type ConfirmMode = "project" | "commit" | "schedule" | "memo";
 
 type Props = {
+  open:boolean;
   mode: ConfirmMode;
   title: string;
   message: string;
@@ -12,12 +11,16 @@ type Props = {
 };
 
 export default function ConfirmModal({
+  open,
+  mode,
   title,
   message,
   onConfirm,
   onClose,
   isLoading = false,
 }: Props) {
+  if (!open) return null; // 非表示時は null を返す
+
   const handleConfirm = async () => {
     await onConfirm();
     onClose();
@@ -51,7 +54,7 @@ export default function ConfirmModal({
             disabled={isLoading}
             className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
           >
-            {isLoading ? <span>処理中...</span> : <span>実行する</span>}
+            {isLoading ? <span>処理中...</span> : <span>削除する</span>}
           </button>
         </div>
       </div>

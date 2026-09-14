@@ -22,7 +22,7 @@ export default function UserProfileModal({
   const [bgmUrl, setBgmUrl] = useState(currentUser?.bgmUrl ?? "");
 
   // 画像プレビュー用
-  const [setIconFile] = useState<File | null>(null);
+  const [, setIconFile] = useState<File | undefined>(undefined);
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     currentUser?.icon ?? null
   );

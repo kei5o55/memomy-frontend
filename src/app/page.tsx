@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { NewProjectInput } from "../logic/api-types";
 import CreateProjectModal from "../components/CreateProjectModal";
 import type { Project, Commit, WorkSession } from "../logic/types";
+import ConfirmModal from "../components/ConfirmComponent";
 import CalendarBoard from "../components/CalendarBoard";
 import CommitModal, { type DraftCommit } from "../components/CommitModal"; 
 import {
@@ -12,13 +13,13 @@ import {
   loadCommitsIdb,
   loadSessionsIdb,
   deleteProjectDb,
-  addCommitIdb, // ← 追加
+  addCommitIdb,
 } from "../logic/storage-idb";
 
 const BASE_URL = 'http://localhost:3001';
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
-import { loadProjects,createProject,loadCommits,createCommit,deleteProject,updateProject} from "../logic/api-request";
+import { loadProjects, createProject, loadCommits, createCommit, deleteProject, updateProject } from "../logic/api-request";
 
 import Link from "next/link";
 
@@ -58,16 +59,17 @@ export default function ProjectsPage() {
   const [targetProjectId, setTargetProjectId] = useState<string | null>(null);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  
+  // 削除確認モーダル用の State
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+
   const [sessionsAll, setSessionsAll] = useState<WorkSession[]>([]);
-  const [hasMounted,] = useState(true);
+  const [hasMounted] = useState(true);
 
   // 表示するタブ（active: 進行中, completed: 完了済み）
-  const [activeTab, setActiveTab] = useState<"calender"|"active" | "completed">("active");
+  const [activeTab, setActiveTab] = useState<"calender" | "active" | "completed">("active");
 
   const refresh = async () => {
-    // 環境変数によって呼び出す関数を切り替える
-   
-
     const [nextProjects, nextCommits, nextSessions] = await Promise.all([
       isApiMode ? loadProjects() : loadProjectsIdb(),
       isApiMode ? loadCommits() : loadCommitsIdb(),
@@ -100,7 +102,6 @@ export default function ProjectsPage() {
     const now = Date.now();
     const defaultMinutes = 30; // デフォルトで30分の作業としてセット
 
-    // 該当プロジェクトのコミットのみ抽出
     const projectCommits = commitsAll.filter((c) => c.projectId === project.id);
     const todayMs = calcTodayTotalMs(projectCommits);
     const totalMs = projectCommits.reduce((acc, c) => acc + (c.durationMs || 0), 0);
@@ -161,15 +162,12 @@ export default function ProjectsPage() {
     const isApiMode = process.env.NEXT_PUBLIC_API_MODE === 'true';
 
     for (const c of commitsAll) {
-      // 画像が存在するかどうかをモードに応じて判定
       const hasImage = isApiMode
         ? typeof c.image === 'string' || Boolean(c.image?.blob)
         : Boolean(c.image?.blob);
 
       if (hasImage) {
         const prev = map.get(c.projectId);
-
-        // 最新の endedAt を持つコミットに更新
         if (!prev || prev.endedAt < c.endedAt) {
           map.set(c.projectId, c);
         }
@@ -182,18 +180,14 @@ export default function ProjectsPage() {
   function getImageUrl(commit: Commit) {
     const isApiMode = process.env.NEXT_PUBLIC_API_MODE === 'true';
 
-    // 1. Blob オブジェクトが存在する場合 (ローカル保存 / 新規選択時)
     if (commit.image?.blob) {
       return URL.createObjectURL(commit.image.blob);
     }
 
-    // 2. APIモードかつ、c.image が文字列 (Rails からの画像パス) の場合
     if (isApiMode && typeof commit.image === 'string') {
-      console.log(`${BASE_URL}/${commit.image}`);
       return `${BASE_URL}/${commit.image}`;
     }
 
-    // 3. 画像が存在しない場合
     return null;
   }
 
@@ -201,7 +195,6 @@ export default function ProjectsPage() {
     const name = input.name.trim();
     if (!name) return;
 
-    // 数値項目のバリデーションとサニタイズ
     const targetHours =
       input.targetHours && Number.isFinite(input.targetHours) && input.targetHours > 0
         ? input.targetHours
@@ -217,7 +210,6 @@ export default function ProjectsPage() {
         ? input.pomodoroBreakMinutes
         : undefined;
 
-    // 整形済みの入力オブジェクトを作る
     const sanitizedInput: NewProjectInput = {
       ...input,
       name,
@@ -228,17 +220,12 @@ export default function ProjectsPage() {
       pomodoroBreakMinutes,
     };
 
-    // 環境変数の判定（"true" という文字列かどうか）
     const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
     if (isApiMode) {
-      // 【API モード】Rails API へ送信して更新
       try {
         const created = await createProject(sanitizedInput);
-        if (!created) {
-          // API 側でバリデーションエラー等の場合はダイアログを閉じずに中断
-          return;
-        }
+        if (!created) return;
         const nextProjects = await loadProjects();
         setProjects(nextProjects);
         setIsCreateOpen(false);
@@ -246,7 +233,6 @@ export default function ProjectsPage() {
         console.error("プロジェクトの作成に失敗しました:", error);
       }
     } else {
-      // 【ローカル/オフライン モード】IndexedDB へ保存
       const p: Project = {
         id: uid(),
         name,
@@ -266,7 +252,6 @@ export default function ProjectsPage() {
     }
   };
 
-  // 完了状態の切り替え関数
   const onToggleComplete = async (project: Project) => {
     const nextStatus = !project.completed;
     const actionLabel = nextStatus ? "完了" : "未完了（進行中）に戻す";
@@ -277,56 +262,50 @@ export default function ProjectsPage() {
 
     const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
-    // 更新対象のプロジェクトオブジェクト
     const updatedTargetProject: Project = {
       ...project,
       completed: nextStatus,
     };
 
-    // State の即時更新（楽観的UI更新）
     const nextProjects = projects.map((p) =>
       p.id === project.id ? updatedTargetProject : p
     );
-    //setProjects(nextProjects);
 
     if (isApiMode) {
-      // 🌐 API モード: Rails バックエンドへ PATCH リクエスト送信
-      //ここ、リクエストが二回送信されるからなんか上手くやりたいかも。（ドラフト作ってやるとか）
       const updated = await updateProject(updatedTargetProject);
       if (!updated) {
         alert("ステータスの更新に失敗しました");
-        // 失敗した場合は元の状態に戻す (ロールバック)
         setProjects(projects);
-      }else if(updated){
+      } else {
         const nexProjects = await loadProjects();
-
         setProjects(nexProjects);
       }
     } else {
-      // 💾 ローカルモード: IndexedDB に保存
       await saveProjectsIdb(nextProjects);
     }
   };
 
-  const onDelete = async (id: string) => {
-    const target = projects.find((p) => p.id === id);
-    const label = target ? `「${target.name}」` : "このプロジェクト";
-    if (!confirm(`${label}を削除します。よろしいですか？`)) return;
+  // 削除ボタン押下時: モーダルを開くために削除対象を設定
+  const onRequestDelete = (project: Project) => {
+    setDeleteTarget(project);
+  };
 
+  // モーダル側で確定ボタンが押された時の実行関数
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    const id = deleteTarget.id;
     const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
     if (isApiMode) {
-      // API モード: Rails バックエンドの DELETE /api/v1/projects/:id を実行
       const success = await deleteProject(id);
-
       if (success) {
         setProjects((prev) => prev.filter((p) => p.id !== id));
       } else {
         alert("プロジェクトの削除に失敗しました。時間をおいて再度お試しください。");
       }
     } else {
-      // ⭕️ ローカルモード: IDB から指定 ID のみ削除（全消去の危険性を排除）
-      await deleteProjectDb(id); // ← 作成した個別削除関数を呼ぶ
+      await deleteProjectDb(id);
       setProjects((prev) => prev.filter((p) => p.id !== id));
     }
   };
@@ -427,7 +406,7 @@ export default function ProjectsPage() {
             データを読み込み中...
           </div>
         ) : activeTab === "calender" ? (
-            <CalendarBoard></CalendarBoard>
+            <CalendarBoard />
         ) : filteredProjects.length === 0 ? (
           <div className="text-center py-12 px-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50/50">
             <p className="text-slate-500 font-medium">
@@ -496,7 +475,7 @@ export default function ProjectsPage() {
                     </div>
 
                     <button
-                      onClick={() => onDelete(p.id)}
+                      onClick={() => onRequestDelete(p)}
                       className="text-xs font-medium text-slate-400 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50 cursor-pointer ml-auto sm:ml-0"
                       title="プロジェクトを削除"
                     >
@@ -582,7 +561,7 @@ export default function ProjectsPage() {
                       )}
                       {!p.completed && (
                         <button
-                          onClick={() => handleOpenDirectCommit(p)} // ← onClick を設定
+                          onClick={() => handleOpenDirectCommit(p)}
                           className="text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer"
                         >
                           ダイレクトコミット
@@ -608,18 +587,27 @@ export default function ProjectsPage() {
                   </div>
                 </article>
               );
-              
             })}
           </div>
         )}
       </section>
 
+      {/* 新規作成モーダル */}
       <CreateProjectModal
-        key={isCreateOpen ? "open" : "closed"} // モーダルの開閉時に強制的に再マウントさせるための key
+        key={isCreateOpen ? "open" : "closed"}
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onCreate={onCreate}
-        //onCreate={onCreate2} //バックエンド連携の時はこっちにスイッチ
+      />
+
+      {/* 削除確認モーダル */}
+      <ConfirmModal 
+        open={Boolean(deleteTarget)}
+        mode="project"
+        title="プロジェクトの削除"
+        message={`「${deleteTarget?.name || ""}」を削除してもよろしいですか？\nこの操作は取り消せません。`}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
       />
 
       {/* ダイレクトコミットモーダル */}
@@ -639,7 +627,6 @@ export default function ProjectsPage() {
           const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
           if (isApiMode) {
-            // 【API モード】Rails API へ FormData 送信
             try {
               const created = await createCommit({
                 projectId: targetProjectId,
@@ -656,16 +643,12 @@ export default function ProjectsPage() {
                   : undefined,
               });
 
-              if (!created) {
-                // API保存が失敗（バリデーションエラー等）した場合はモーダルを閉じずに中断
-                return;
-              }
+              if (!created) return;
             } catch (error) {
               console.error("コミットの作成に失敗しました:", error);
               return;
             }
           } else {
-            // 【ローカル/オフライン モード】IndexedDB へ保存
             await addCommitIdb({
               id: uid(),
               projectId: targetProjectId,
@@ -684,7 +667,6 @@ export default function ProjectsPage() {
             });
           }
 
-          // クリーンアップとデータ再取得（共通処理）
           setIsModalOpen(false);
           setDraftCommit(null);
           setTargetProjectId(null);
@@ -693,13 +675,7 @@ export default function ProjectsPage() {
         onSaveAndContinue={() => {}}
       />
 
-      {/* Calendar & Heatmap */}
-      <div className="space-y-6 pt-4 border-t border-slate-200">
-        {/*<section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <ContributionHeatmap commits={commitsAll} title="All Activity" />
-        </section>*/}
-        {/*<DataMigrationButton></DataMigrationButton>*/}
-      </div>
+      <div className="space-y-6 pt-4 border-t border-slate-200" />
     </main>
   );
 }

@@ -1,4 +1,4 @@
-[![Frontend CI](https://github.com/kei5o55/memomy-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/kei5o55/memomy-frontend/actions/workflows/ci.yml)
+[![Frontend CI/CD](https://github.com/kei5o55/memomy-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/kei5o55/memomy-frontend/actions/workflows/ci.yml)
 ## Rough Cut（仮称）
 
 創作活動向けの作業ログ・タイマーアプリ。

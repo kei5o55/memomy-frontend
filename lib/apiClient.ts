@@ -1,6 +1,6 @@
 // lib/apiClient.ts
 
-const API_BASE_URL = process.env.API_URL || '';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const STORAGE_KEY = 'app_basic_auth';
 
 

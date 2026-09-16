@@ -1,102 +1,77 @@
-'use client';
+// app/login/page.tsx
+"use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { checkApiHealth, saveAuthCredentials } from '../../../lib/apiClient';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState('');
+  const [pass, setPass] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsSubmitting(true);
+    setError('');
 
-    try {
-      // TODO: ここに認証処理（NextAuth.js / Supabase / Firebase 等）を実装
-      console.log('Logging in with:', { email, password });
-    } catch (error) {
-      console.error('Login error:', error);
-    } finally {
-      setIsLoading(false);
+    // 入力された値で Base64 文字列を一時作成して疎通確認
+    const testCredentials = btoa(`${user}:${pass}`);
+    const isValid = await checkApiHealth(testCredentials);
+
+    if (isValid) {
+      // 成功した場合のみ localStorage に保存
+      saveAuthCredentials(user, pass);
+      router.push('/'); // メイン画面へリダイレクト
+    } else {
+      setError('ユーザー名またはパスワードが正しくないか、サーバーに接続できません。');
     }
+    setIsSubmitting(false);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-xl border border-gray-100">
-        <div>
-          <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-gray-900">
-            作業ログアプリ
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            アカウントにログインして作業を開始
-          </p>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-md">
+        <h1 className="mb-6 text-2xl font-bold text-slate-800">API モード ログイン</h1>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4 rounded-md shadow-sm">
-            <div>
-              <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-1">
-                メールアドレス
-              </label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="relative block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                パスワード
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="relative block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                placeholder="••••••••"
-              />
-            </div>
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            {error}
           </div>
+        )}
 
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-gray-900">
-                ログイン状態を保持
-              </label>
-            </div>
-
-            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-              パスワードをお忘れですか？
-            </a>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">ユーザー名</label>
+            <input
+              type="text"
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+              required
+              className="mt-1 w-full rounded-lg border border-slate-300 p-2.5"
+            />
           </div>
 
           <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative flex w-full justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 transition-colors"
-            >
-              {isLoading ? 'ログイン処理中...' : 'ログイン'}
-            </button>
+            <label className="block text-sm font-medium text-slate-700">パスワード</label>
+            <input
+              type="password"
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              required
+              className="mt-1 w-full rounded-lg border border-slate-300 p-2.5"
+            />
           </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full rounded-lg bg-indigo-600 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {isSubmitting ? '認証中...' : 'ログイン'}
+          </button>
         </form>
       </div>
     </div>

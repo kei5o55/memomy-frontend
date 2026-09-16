@@ -13,7 +13,8 @@ import {loadCommits,loadProjects,deleteCommit} from "../../../logic/api-request"
 import ConfirmModal from "../../../components/ConfirmModal";
 import type { Commit, Project } from "../../../logic/types";
 
-const BASE_URL = 'http://localhost:3001/';
+import { HOST_URL } from "@/logic/url";
+
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -43,8 +44,8 @@ export default function CommitDetailPage({
   const [deleteTarget,setDeleteTarget] = useState<Commit|null>(null)
 
   // 編集用 State
-  const [noteInput, setNoteInput] = useState("");
-  const [isEditingNote, setIsEditingNote] = useState(false);
+  /*const [noteInput, setNoteInput] = useState("");
+  const [isEditingNote, setIsEditingNote] = useState(false);*/
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const refreshData = async () => {
@@ -105,7 +106,7 @@ export default function CommitDetailPage({
   useEffect(() => {
     if (!commit) return;
 
-    setNoteInput(commit.note ?? "");
+    //setNoteInput(commit.note ?? "");
 
     if (commit.image?.blob) {
       const url = URL.createObjectURL(commit.image.blob);
@@ -115,7 +116,7 @@ export default function CommitDetailPage({
         URL.revokeObjectURL(url);
       };
     } else if(typeof commit.image === 'string'){
-      const fullurl =`${BASE_URL}/${commit.image}`;
+      const fullurl =`${HOST_URL}/${commit.image}`;
       setImageUrl(fullurl);
 
       return () => {
@@ -126,18 +127,6 @@ export default function CommitDetailPage({
     }
     
   }, [commit]);
-
-  const handleSaveNote = async () => {
-    if (!commit) return;
-
-    const nextCommits = commits.map((c) =>
-      c.id === commit.id ? { ...c, note: noteInput.trim() } : c
-    );
-
-    setCommits(nextCommits);
-    await saveCommitsIdb(nextCommits);
-    setIsEditingNote(false);
-  };
 
   const handleDeleteCommit = async () => {
     if (!commit) return;
@@ -246,9 +235,9 @@ export default function CommitDetailPage({
           </p>
         </div>
 
-        {/* 作業メモ */}
+        {/* 作業メモ*/}
         <div className="space-y-2 border-t border-slate-100 pt-4">
-          <div className="flex items-center justify-between">
+          {/*<div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-slate-900">作業メモ</h2>
             {!isEditingNote && (
               <button
@@ -258,9 +247,9 @@ export default function CommitDetailPage({
                 編集
               </button>
             )}
-          </div>
+          </div>*/}
 
-          {isEditingNote ? (
+          {/*{isEditingNote ? (
             <div className="space-y-3">
               <textarea
                 value={noteInput}
@@ -283,11 +272,10 @@ export default function CommitDetailPage({
                 </button>
               </div>
             </div>
-          ) : (
+          ) : (*/}
             <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-100">
               {commit.note?.trim() || "（メモなし）"}
             </p>
-          )}
         </div>
 
         {/* 添付画像 */}

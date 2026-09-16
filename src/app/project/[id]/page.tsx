@@ -12,7 +12,7 @@ import type { Project, Commit } from "../../../logic/types";
 import Link from "next/link";
 import { use } from "react";
 
-const BASE_URL = 'http://localhost:3001/';
+import { HOST_URL } from "@/logic/url";
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -553,7 +553,7 @@ export default function ProjectDetailPage({
 
             if (!displayUrl && isApiMode && typeof c.image === 'string') {
               // すでに http から始まる完全な URL か、相対パスかで安全に結合
-              displayUrl = `${BASE_URL}${c.image}`;
+              displayUrl = `${HOST_URL}${c.image}`;
             }
 
             return (

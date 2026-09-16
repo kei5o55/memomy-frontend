@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import type { Project, TimerMode, WorkSession,Commit } from "../../../logic/types";
 import type { NewCommitInput } from "../../../logic/api-types";
 
+
 function pad2(n: number) {
   return String(n).padStart(2, "0");
 }

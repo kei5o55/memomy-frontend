@@ -70,13 +70,13 @@ export default function ProjectsPage() {
   const [activeTab, setActiveTab] = useState<"calender" | "active" | "completed">("active");
 
   const refresh = async () => {
-    const [nextProjects, nextCommits, nextSessions] = await Promise.all([
+    const [nextProjects, nextCommits, nextSessions] = await Promise.all([//
       isApiMode ? loadProjects() : loadProjectsIdb(),
       isApiMode ? loadCommits() : loadCommitsIdb(),
       loadSessionsIdb(), // Sessions はモードに関わらず常に IndexedDB から取得
     ]);
 
-    setProjects(nextProjects);
+    setProjects(nextProjects);//一つでもなにかおかしい事あったら再リロードみたいにしてもいいかもしれ
     setCommitsAll(nextCommits);
     setSessionsAll(nextSessions);
   };

@@ -7,13 +7,13 @@ function formatDate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function isDateInRange(target: string, start?: string, end?: string): boolean {
+/*function isDateInRange(target: string, start?: string, end?: string): boolean {
   if (!start && !end) return false;
   if (start && end) return target >= start && target <= end;
   if (start) return target >= start;
   if (end) return target <= end;
   return false;
-}
+}*/
 
 function isCommitOnDate(commit: Commit, date: string): boolean {
   return formatDate(new Date(commit.startedAt)) === date;
@@ -38,9 +38,7 @@ export function buildCalendarCells(
 
     const date = formatDate(current);
 
-    const dayProjects = projects.filter((p) =>
-      isDateInRange(date, p.startDate, p.endDate),
-    );
+
 
     const dueProjects = projects.filter((p) => p.dueDate === date);
 
@@ -51,7 +49,6 @@ export function buildCalendarCells(
       date,
       isCurrentMonth: current.getMonth() === month,
       isCurrendDay: date === formatDate(new Date()),
-      projects: dayProjects,
       dueProjects,
       memos: dayMemos,
       commits: dayCommits,

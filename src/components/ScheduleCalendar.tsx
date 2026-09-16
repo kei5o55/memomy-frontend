@@ -143,7 +143,7 @@ export default function ScheduleCalendar({
                       </div>
                     )}
 
-                    {/* 進行中プロジェクト */}
+                    {/* 進行中プロジェクト 
                     {cell.projects.slice(0, 1).map((project) => (
                       <div
                         key={project.id}
@@ -152,7 +152,7 @@ export default function ScheduleCalendar({
                       >
                         {project.name}
                       </div>
-                    ))}
+                    ))}*/}
 
                     {/* メモ */}
                     {cell.memos.slice(0, 1).map((memo) => (

@@ -25,6 +25,7 @@ export function clearAuthCredentials() {
 // API ヘルスチェック 兼 認証検証関数
 export async function checkApiHealth(customAuth?: string): Promise<boolean> {
   if (!API_BASE_URL) return false;
+  
 
   const authHeader = customAuth
     ? { Authorization: `Basic ${customAuth}` }

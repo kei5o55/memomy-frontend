@@ -1,12 +1,14 @@
 import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput, ApiCalendarMemosRes } from "./api-types";
 import type { Project, Commit, DaySchedule, CalendarMemo,  } from "./types";
 import type { ApiDayScheduleRes,ApiProjectResponse } from "./api-types";
+import { BASE_URL } from "./url";
 
-const BASE_URL = 'http://localhost:3001/api/v1';
+//const BASE_URL = 'http://localhost:3001/api/v1';
 
 // コミットを取得する API
 export const loadCommits = async (): Promise<Commit[]> => {
   try {
+    console.log(BASE_URL);
     const response = await fetch(`${BASE_URL}/commits`);
 
     if (!response.ok) {

@@ -15,8 +15,8 @@ import {
   deleteProjectDb,
   addCommitIdb,
 } from "../logic/storage-idb";
+import { HOST_URL } from "@/logic/url";//http://localhost:3001 まで(api/v1とかはない)理由：rails/からのアクティブレコードのパスを作りたいかわ
 
-const BASE_URL = 'http://localhost:3001';
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
 import { loadProjects, createProject, loadCommits, createCommit, deleteProject, updateProject } from "../logic/api-request";
@@ -185,7 +185,7 @@ export default function ProjectsPage() {
     }
 
     if (isApiMode && typeof commit.image === 'string') {
-      return `${BASE_URL}/${commit.image}`;
+      return `${HOST_URL}/${commit.image}`;
     }
 
     return null;
@@ -215,9 +215,9 @@ export default function ProjectsPage() {
       name,
       dueDate: input.dueDate?.trim() || undefined,
       memo: input.memo?.trim() || undefined,
-      targetHours,
-      pomodoroWorkMinutes,
-      pomodoroBreakMinutes,
+      targetHours: input.targetHours,
+      pomodoroWorkMinutes: input.pomodoroWorkMinutes,
+      pomodoroBreakMinutes: input.pomodoroBreakMinutes
     };
 
     const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";

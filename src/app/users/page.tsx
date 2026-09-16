@@ -17,9 +17,9 @@ import {
 } from "../../logic/storage-idb";
 
 import { loadProjects,loadCommits } from "../../logic/api-request";
+import { HOST_URL } from "@/logic/url";
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
-const BASE_URL = 'http://localhost:3001';
 
 
 // 初期ユーザーデータ
@@ -395,7 +395,7 @@ export default function UserProfilePage() {
 
               // 🌐 APIモード: Railsサーバー上の画像パス (`BASE_URL + commit.image`)
               // 💾 ローカルモード: IndexedDB の Blob から生成した Object URL (`imageUrlMap[commit.id]`)
-              const src = isApiMode?  `${BASE_URL}/${commit.image}`: imageUrlMap[commit.id];
+              const src = isApiMode?  `${HOST_URL}/${commit.image}`: imageUrlMap[commit.id];
 
               return (
                 <div

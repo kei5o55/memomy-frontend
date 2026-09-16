@@ -3,6 +3,7 @@
 const API_BASE_URL = process.env.API_URL || '';
 const STORAGE_KEY = 'app_basic_auth';
 
+
 // 保存されている Basic 認証用のヘッダーを取得
 export function getAuthHeader(): Record<string, string> {
   if (typeof window === 'undefined') return {};

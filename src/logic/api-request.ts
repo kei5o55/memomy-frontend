@@ -13,7 +13,7 @@ export const loadCommits = async (): Promise<Commit[]> => {
       throw new Error(`HTTPエラー! status: ${response.status}`);
     }
 
-    const rawData:Commit[] = await response.json();
+    const rawData:Commit[] = await response.json(); 
 
     console.log("送られたデータ : ", rawData);
 

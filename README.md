@@ -117,7 +117,7 @@ memomyに制作過程を記録しておくことで、
   - **今後の展望**: 将来的な認証・認可機能実装に伴い、ユーザー単位でのクラウドデータ保存（https://memomy.net でのREST API運用)ができる設計を考慮
 
 ### バックエンド
-- **Ruby on Rails**
+- **Ruby on Rails  (https://github.com/kei5o55/memomy-backend)**
   - REST APIとして実装。フロントエンドからの作業ログ・プロジェクト等のデータ管理を担当。
   - ActiveRecordなど、便利なORMやその他機能の豊富さから採用
   - Devise / devise-jwtを用いた認証機能を実装中。

@@ -56,7 +56,14 @@ export default function TimerPage({
   const [phaseStartedAt, setPhaseStartedAt] = useState<number | null>(null);
   const [completedPomodoros, setCompletedPomodoros] = useState(0);
   const [phasePausedAt, setPhasePausedAt] = useState<number | null>(null);
+  const [time,setTime] = useState<string>(new Date().toLocaleTimeString("ja-JP"));
+  useEffect(() => {
+        const timer = setInterval(() =>{
+          setTime(new Date().toLocaleTimeString("ja-JP"));
+        },1000);
 
+        return () => clearInterval(timer);
+  })
   const resolvedParams = use(params);
   const projectId = resolvedParams.id;
 
@@ -64,6 +71,14 @@ export default function TimerPage({
     if (!projectId) return null;
     return projects.find((p) => p.id === projectId) ?? null;
   }, [projectId, projects]);
+
+  const Clock: React.FC=()=>{//いったんこれが時計表示になる
+    return (
+      <div style={{ padding: '16px', fontFamily: 'monospace', fontSize: '1.2rem' }}>
+        <p>現在時刻: {time}</p>
+      </div>
+    );
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -95,11 +110,6 @@ export default function TimerPage({
       cancelled = true;
     };
   }, []);
-
-  /*const projectSessions = useMemo(
-    () => sessions.filter((s) => s.projectId === projectId),
-    [sessions, projectId]
-  );*/
 
   const projectCommits =useMemo(
     ()=>commits.filter((s)=>s.projectId===projectId),[commits,projectId]
@@ -559,7 +569,7 @@ export default function TimerPage({
       {/* メインタイマーエリア */}
       <section className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-sm mb-8">
         <div className="text-5xl font-mono font-bold tracking-tight text-zinc-900 mb-4 tabular-nums">
-          {formatMs(currentElapsedMs)}
+          {formatMs(currentElapsedMs)}{Clock()}
         </div>
 
         {pomodoroEnabled && (

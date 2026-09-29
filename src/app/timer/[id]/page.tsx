@@ -563,7 +563,8 @@ export default function TimerPage({
       {/* メインタイマーエリア */}
       <section className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-sm mb-8">
         <div className="text-5xl font-mono font-bold tracking-tight text-zinc-900 mb-4 tabular-nums">
-          {formatMs(currentElapsedMs)}現在時刻{time}
+          {formatMs(currentElapsedMs)}
+          <span className="text-sm ml-8">現在時刻 : {time}</span>
         </div>
 
         {pomodoroEnabled && (

@@ -58,6 +58,7 @@ export default function TimerPage({
   const [phasePausedAt, setPhasePausedAt] = useState<number | null>(null);
 
   const [time, setTime] = useState<string>(new Date().toLocaleTimeString("ja-JP"));
+  const [timerFlag,setTimerFlag] = useState(true);//タイマー or timeの切り替えステート
   useEffect(() => {
     const timer = setInterval(() => {//setIntervalによって毎秒setTimeが走り、stateが更新。結果timeが毎秒増えて行ってるよん
       setTime(new Date().toLocaleTimeString("ja-JP"));
@@ -562,10 +563,35 @@ export default function TimerPage({
 
       {/* メインタイマーエリア */}
       <section className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-sm mb-8">
-        <div className="text-5xl font-mono font-bold tracking-tight text-zinc-900 mb-4 tabular-nums">
-          {formatMs(currentElapsedMs)}
-          <span className="text-sm ml-8">現在時刻 : {time}</span>
+      <div className="flex items-center gap-4 mb-4">
+        {/*表示部分：timerFlag の値によって描画内容を切り替え */}
+        <div className="text-5xl font-mono font-bold tracking-tight text-zinc-900 tabular-nums">
+          {timerFlag ? (
+            <div><p className="text-sm text-gray-500">時刻</p>{time}</div>
+            
+          ) : (
+            <span><p className="text-sm text-gray-500">タイマー</p>{formatMs(currentElapsedMs)}</span>
+          )}
         </div>
+
+        {/* 切り替えボタン */}
+        <button
+          onClick={() => setTimerFlag((prev) => !prev)}
+          className="mt-5 px-3 py-1.5 text-xs font-sans font-medium text-zinc-700 bg-zinc-100 border border-zinc-300 rounded-md hover:bg-zinc-200 transition-colors"
+        >
+          {timerFlag ? (
+            /* タイマー / 経過時間アイコン */
+            <svg className="w-5 h-5 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : (
+            /* 時計 / 現在時刻アイコン */
+            <svg className="w-5 h-5 text-zinc-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+        </button>
+      </div>
 
         {pomodoroEnabled && (
           <div className="mb-4 p-3 bg-zinc-50 rounded-xl border border-zinc-100 text-xs text-zinc-600 space-y-1">

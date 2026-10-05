@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, use } from "react";
 import type { DraftCommit } from "../../../components/CommitModal";
 import CommitModal from "../../../components/CommitModal";
+import ArtLightbox from "@/components/ArtLightbox";
 import {
   loadSessionsIdb,
   saveSessionsIdb,
@@ -15,6 +16,9 @@ import { loadProjects,loadCommits,createCommit,} from "../../../logic/api-reques
 import { useRouter } from "next/navigation";
 import type { Project, TimerMode, WorkSession,Commit } from "../../../logic/types";
 import type { NewCommitInput } from "../../../logic/api-types";
+import { HOST_URL } from "@/logic/url";
+
+const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
 
 function pad2(n: number) {
@@ -56,6 +60,9 @@ export default function TimerPage({
   const [phaseStartedAt, setPhaseStartedAt] = useState<number | null>(null);
   const [completedPomodoros, setCompletedPomodoros] = useState(0);
   const [phasePausedAt, setPhasePausedAt] = useState<number | null>(null);
+
+  // Blob画像のURLキャッシュ
+  const [imageUrlMap, setImageUrlMap] = useState<Record<string, string>>({});
 
   const [time, setTime] = useState<string>(new Date().toLocaleTimeString("ja-JP"));
   const [timerFlag,setTimerFlag] = useState(true);//タイマー or timeの切り替えステート
@@ -528,38 +535,40 @@ export default function TimerPage({
         ← Projectsへ戻る
       </button>
 
-      <header className="mb-6">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
-            {selectedProject.name}
-          </h1>
+  <header className="mb-6">
+    <div className="flex items-center gap-3 flex-wrap">
+      <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
+        {selectedProject.name}
+      </h1>
 
-          {selectedProject.dueDate && (
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60">
-              納期: {selectedProject.dueDate}
-            </span>
-          )}
+      {selectedProject.dueDate && (
+        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60">
+          納期: {selectedProject.dueDate}
+        </span>
+      )}
+      
+      {/* Boolean(...) または > 0 で判定する */}
+      {Boolean(selectedProject.pomodoroWorkMinutes) && (
+        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200/60">
+          {selectedProject.pomodoroWorkMinutes}分 / 休憩{" "}
+          {selectedProject.pomodoroBreakMinutes ?? 5}分
+        </span>
+      )}
 
-          {selectedProject.pomodoroWorkMinutes && (
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200/60">
-              {selectedProject.pomodoroWorkMinutes}分 / 休憩{" "}
-              {selectedProject.pomodoroBreakMinutes ?? 5}分
-            </span>
-          )}
+      {/* > 0 で判定することで 0 の場合は非表示にする */}
+      {Number(selectedProject.targetHours) > 0 && (
+        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200">
+          目標: {selectedProject.targetHours}h
+        </span>
+      )}
+    </div>
 
-          {selectedProject.targetHours && (
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200">
-              目標: {selectedProject.targetHours}h
-            </span>
-          )}
-        </div>
-
-        {selectedProject.memo?.trim() && (
-          <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
-            {selectedProject.memo}
-          </p>
-        )}
-      </header>
+    {selectedProject.memo?.trim() && (
+      <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
+        {selectedProject.memo}
+      </p>
+    )}
+  </header>
 
       {/* メインタイマーエリア */}
       <section className="p-6 bg-white border border-zinc-200 rounded-2xl shadow-sm mb-8">
@@ -577,7 +586,7 @@ export default function TimerPage({
         {/* 切り替えボタン */}
         <button
           onClick={() => setTimerFlag((prev) => !prev)}
-          className="mt-5 px-3 py-1.5 text-xs font-sans font-medium text-zinc-700 bg-zinc-100 border border-zinc-300 rounded-md hover:bg-zinc-200 transition-colors"
+          className="cursor-pointer mt-5 px-3 py-1.5 text-xs font-sans font-medium text-zinc-700 bg-zinc-100 border border-zinc-300 rounded-md hover:bg-zinc-200 transition-colors"
         >
           {timerFlag ? (
             /* タイマー / 経過時間アイコン */
@@ -716,11 +725,11 @@ export default function TimerPage({
 
       {/* Sessions一覧 */}
       <section>
-        <h2 className="text-base font-bold text-zinc-900 mb-3">ルーズリーフ</h2>
+        <h2 className="text-base font-bold text-zinc-900 mb-3">メモリー</h2>
 
         {projectCommits.length === 0 ? (
           <div className="p-8 text-center text-zinc-400 text-sm bg-zinc-50/50 border border-dashed border-zinc-200 rounded-2xl">
-            まだセッションがありません
+            まだ記録がありません
           </div>
         ) : (
           <ul className="space-y-3">
@@ -728,33 +737,51 @@ export default function TimerPage({
               const end =
                 s.endedAt
               const ms = end - s.startedAt;
+              // 🌐 APIモード: Railsサーバー上の画像パス (`BASE_URL + commit.image`)
+              // 💾 ローカルモード: IndexedDB の Blob から生成した Object URL (`imageUrlMap[commit.id]`)
+              const src = isApiMode?  `${HOST_URL}/${s.image}`: imageUrlMap[s.id];
 
 
               return (
                 <li
                   key={s.id}
-                  className={`p-4 rounded-xl border transition-all  border-zinc-200`}
+                  className="p-4 rounded-xl border border-zinc-200/90 bg-white/70 backdrop-blur-sm transition-all hover:border-zinc-300"
                 >
-                  <div className="flex items-center justify-between gap-3 mb-1">
-                    <strong className="text-lg font-mono font-bold text-zinc-800 tabular-nums">
-                      {formatMs(ms)}
-                    </strong>
-                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    {/* 左側: 時間情報 & メモ */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-3 mb-1">
+                        <strong className="text-lg font-mono font-bold text-zinc-800 tabular-nums">
+                          {formatMs(ms)}
+                        </strong>
+                      </div>
 
-                  <div className="text-xs text-zinc-400 mb-2">
-                    {new Date(s.startedAt).toLocaleString()}
-                    {s.endedAt
-                      ? ` → ${new Date(s.endedAt).toLocaleString()}`
-                      : ""}
-                  </div>
+                      <div className="text-xs text-zinc-400 mb-2">
+                        {new Date(s.startedAt).toLocaleString()}
+                        {s.endedAt
+                          ? ` → ${new Date(s.endedAt).toLocaleString()}`
+                          : ""}
+                      </div>
 
-                  {s.note?.trim() ? (
-                    <p className="text-sm text-zinc-700 whitespace-pre-wrap bg-zinc-50/80 p-2.5 rounded-lg border border-zinc-100">
-                      {s.note}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-zinc-400 italic">（メモなし）</p>
-                  )}
+                      {s.note?.trim() ? (
+                        <p className="text-sm text-zinc-700 whitespace-pre-wrap bg-zinc-50/80 p-2.5 rounded-lg border border-zinc-100/80">
+                          {s.note}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-zinc-400 italic">（メモなし）</p>
+                      )}
+                    </div>
+
+                    {/* 右側: サムネイル画像 */}
+                    {s.image && src && (
+                      <div className="relative w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden border border-zinc-200 bg-zinc-50">
+                        <ArtLightbox
+                          src={src}
+                          alt={s.note || "進捗画像"}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </li>
               );
             })}

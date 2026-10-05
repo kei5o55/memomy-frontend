@@ -1,54 +1,46 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 export default function ArtLightbox({ src, alt }: { src: string; alt: string }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // SSR（Next.js）での createPortal エラーを防止するためのマウント判定
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <>
+      {/* 1. サムネイル表示部分（親要素枠にピッタリ収まる） */}
       <div
-        onClick={() => {
-          console.log("open!");
-          setOpen(true);
-        }}
-        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 opacity-90 group-hover:opacity-100 cursor-zoom-in"
-
+        onClick={() => setOpen(true)}
+        className="w-full h-full cursor-zoom-in group relative overflow-hidden"
       >
-        <img src={src} alt={alt} style={{ width: "100%", height: "auto", display: "block" }} />
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 opacity-90 group-hover:opacity-100"
+        />
       </div>
 
-      {open && (
+      {/* 2. モーダル表示部分（createPortal で document.body 直下に展開） */}
+      {open && mounted && createPortal(
         <div
-          onClick={() => setOpen(false)} // ここで閉じるはず
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.6)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            cursor: "zoom-out",
-            padding: 40, // 少し余裕を持たせる
-          }}
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 cursor-zoom-out animate-in fade-in duration-150"
         >
-          {/* 画像を fill にせず、通常のImageとして扱う */}
-          <div style={{ position: "relative", width: "100%", height: "100%" }}>
-            <Image
+          <div className="relative w-full h-full max-w-5xl max-h-[90vh] flex items-center justify-center pointer-events-none">
+            <img
               src={src}
               alt={alt}
-              fill
-              className="object-contain" // Tailwindを使わないなら style={{ objectFit: "contain" }}
-              unoptimized // サイズ計算をバイパスする
-              onClick={() => setOpen(false)} // 画像をクリックしても閉じるようにする
+              className="max-w-full max-h-full object-contain shadow-2xl rounded-sm pointer-events-auto"
             />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

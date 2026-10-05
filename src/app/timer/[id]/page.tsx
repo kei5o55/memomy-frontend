@@ -62,7 +62,7 @@ export default function TimerPage({
   const [phasePausedAt, setPhasePausedAt] = useState<number | null>(null);
 
   // Blob画像のURLキャッシュ
-  const [imageUrlMap, setImageUrlMap] = useState<Record<string, string>>({});
+  const [imageUrlMap,] = useState<Record<string, string>>({});
 
   const [time, setTime] = useState<string>(new Date().toLocaleTimeString("ja-JP"));
   const [timerFlag,setTimerFlag] = useState(true);//タイマー or timeの切り替えステート

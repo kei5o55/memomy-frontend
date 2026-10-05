@@ -72,7 +72,8 @@ export type Commit = {
 export type CalendarMemo = {
   id: string;
   date: string; // "YYYY-MM-DD"
-  text: string;
+  text: string;//タイトル
+  detail?: string;//本文
   createdAt: number;
 };
 

@@ -1,8 +1,11 @@
 import { useState } from "react";
-import type { DaySchedule, Project } from "../logic/types";
+import type { DaySchedule, Project,CalendarMemo } from "../logic/types";
+
+type Mode = "schedule" | "memo";
 
 type Props = {
   open: boolean;
+  mode?: Mode; // デフォルトは "schedule"
   defaultDate: string;
   projects: Project[];
   existingSchedules: DaySchedule[]; // 重複チェック用の既存予定
@@ -16,7 +19,6 @@ function toTotalMinutes(hour: number, minute: number): number {
 }
 
 // 通算分数を用いた重複チェック関数
-// 条件: (新規開始 < 既存終了) AND (新規終了 > 既存開始)
 function checkOverlap(
   existingSchedules: DaySchedule[],
   targetDate: string,
@@ -33,7 +35,6 @@ function checkOverlap(
     });
 }
 
-// "HH:MM" 形式の文字列を [hour, minute] の数値配列に変換するヘルパー関数
 function parseTimeString(timeStr: string): [number, number] {
   const [h, m] = timeStr.split(":").map(Number);
   return [h, m];
@@ -41,6 +42,7 @@ function parseTimeString(timeStr: string): [number, number] {
 
 export default function CreateScheduleModal({
   open,
+  mode = "schedule",
   defaultDate,
   projects,
   existingSchedules,
@@ -48,6 +50,7 @@ export default function CreateScheduleModal({
   onAdd,
 }: Props) {
   const [title, setTitle] = useState("");
+  const [content, setContent] = useState(""); // メモ本文用
   const [date, setDate] = useState(defaultDate);
   const [startTimeStr, setStartTimeStr] = useState("09:00");
   const [endTimeStr, setEndTimeStr] = useState("10:00");
@@ -57,60 +60,84 @@ export default function CreateScheduleModal({
 
   if (!open) return null;
 
+  const handleReset = () => {
+    setTitle("");
+    setContent("");
+    setErrorMsg(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    const [startHour, startMinute] = parseTimeString(startTimeStr);
-    const [endHour, endMinute] = parseTimeString(endTimeStr);
+    if (mode === "schedule") {
+      const [startHour, startMinute] = parseTimeString(startTimeStr);
+      const [endHour, endMinute] = parseTimeString(endTimeStr);
 
-    const startMins = toTotalMinutes(startHour, startMinute);
-    const endMins = toTotalMinutes(endHour, endMinute);
+      const startMins = toTotalMinutes(startHour, startMinute);
+      const endMins = toTotalMinutes(endHour, endMinute);
 
-    // 1. 開始/終了時間の基本チェック
-    if (startMins >= endMins) {
-      setErrorMsg("終了時間は開始時間より後に設定してください。");
-      return;
+      // 1. 開始/終了時間の基本チェック
+      if (startMins >= endMins) {
+        setErrorMsg("終了時間は開始時間より後に設定してください。");
+        return;
+      }
+
+      // 2. 時間重複チェック
+      const overlapped = checkOverlap(existingSchedules, date, startMins, endMins);
+      if (overlapped) {
+        const pad = (n: number) => String(n).padStart(2, "0");
+        const existStart = `${pad(overlapped.startHour)}:${pad(overlapped.startMinute)}`;
+        const existEnd = `${pad(overlapped.endHour)}:${pad(overlapped.endMinute)}`;
+
+        setErrorMsg(
+          `指定した時間帯は「${overlapped.title}」（${existStart}〜${existEnd}）と重複しています。`
+        );
+        return;
+      }
+
+      const newSchedule: DaySchedule = {
+        id: crypto.randomUUID(),
+        date,
+        title,
+        startHour,
+        startMinute,
+        endHour,
+        endMinute,
+        color: color || undefined,
+        projectId: projectId || undefined,
+      };
+
+      await onAdd(newSchedule);
+    } else {
+      // メモ（memo）モードの処理
+      // ※ DaySchedule 型の定義に合わせてプロパティを構成（必要に応じて型の調整を行ってください）
+      const newMemo: DaySchedule = {
+        id: crypto.randomUUID(),
+        date,
+        title,
+        // メモ用途の追加フィールド（DaySchedule 型に memo / content 等を定義している場合）
+        // content, 
+        startHour: 0,
+        startMinute: 0,
+        endHour: 0,
+        endMinute: 0,
+        projectId: projectId || undefined,
+      };
+
+      await onAdd(newMemo);
     }
 
-    // 2. 時間重複チェック
-    const overlapped = checkOverlap(existingSchedules, date, startMins, endMins);
-    if (overlapped) {
-      const pad = (n: number) => String(n).padStart(2, "0");
-      const existStart = `${pad(overlapped.startHour)}:${pad(overlapped.startMinute)}`;
-      const existEnd = `${pad(overlapped.endHour)}:${pad(overlapped.endMinute)}`;
-
-      setErrorMsg(
-        `指定した時間帯は「${overlapped.title}」（${existStart}〜${existEnd}）と重複しています。`
-      );
-      return;
-    }
-
-    // 3. DaySchedule オブジェクトの構築
-    const newSchedule: DaySchedule = {
-      id: crypto.randomUUID(),
-      date,
-      title,
-      startHour,
-      startMinute,
-      endHour,
-      endMinute,
-      color: color || undefined,
-      projectId: projectId || undefined,
-    };
-
-    await onAdd(newSchedule);
-
-    // フォーム初期化 & 閉じる
-    setTitle("");
-    setErrorMsg(null);
+    handleReset();
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
       <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
-        <h3 className="text-lg font-bold text-gray-900">予定を追加</h3>
+        <h3 className="text-lg font-bold text-gray-900">
+          {mode === "schedule" ? "予定を追加" : "メモを追加"}
+        </h3>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           {errorMsg && (
@@ -119,18 +146,38 @@ export default function CreateScheduleModal({
             </div>
           )}
 
+          {/* タイトル（共通） */}
           <div>
-            <label className="block text-xs font-semibold text-gray-700">タイトル</label>
+            <label className="block text-xs font-semibold text-gray-700">
+              {mode === "schedule" ? "タイトル" : "タイトル (要約)"}
+            </label>
             <input
               type="text"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-hidden"
-              placeholder="例: 機能開発、ミーティング"
+              placeholder={mode === "schedule" ? "例: 機能開発、ミーティング" : "例: 今日のアイデア、次回タスク"}
             />
           </div>
 
+          {/* メモモード限定：本文入力 */}
+          {mode === "memo" && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-700">本文</label>
+              <textarea
+                required
+                rows={4}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-hidden"
+                placeholder="メモの詳細内容を入力してください..."
+              />
+            </div>
+          )}
+
+          {/* 日付（共通） */}
+          {mode === "schedule" && (
           <div>
             <label className="block text-xs font-semibold text-gray-700">日付</label>
             <input
@@ -141,31 +188,49 @@ export default function CreateScheduleModal({
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-hidden"
             />
           </div>
+          )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700">開始時間</label>
-              <input
-                type="time"
-                required
-                value={startTimeStr}
-                onChange={(e) => setStartTimeStr(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-hidden"
-              />
-            </div>
+          {/* スケジュールモード限定：時間設定 & カラー設定 */}
+          {mode === "schedule" && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700">開始時間</label>
+                  <input
+                    type="time"
+                    required
+                    value={startTimeStr}
+                    onChange={(e) => setStartTimeStr(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-hidden"
+                  />
+                </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-700">終了時間</label>
-              <input
-                type="time"
-                required
-                value={endTimeStr}
-                onChange={(e) => setEndTimeStr(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-hidden"
-              />
-            </div>
-          </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700">終了時間</label>
+                  <input
+                    type="time"
+                    required
+                    value={endTimeStr}
+                    onChange={(e) => setEndTimeStr(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-hidden"
+                  />
+                </div>
+              </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-gray-700">カラー (任意)</label>
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="mt-1 h-9 w-16 cursor-pointer rounded-lg border border-gray-300 p-1"
+                />
+              </div>
+            </>
+          )}
+
+          {/* プロジェクト選択（schedule） */}
+          {mode === "schedule" && (
           <div>
             <label className="block text-xs font-semibold text-gray-700">紐づけるプロジェクト (任意)</label>
             <select
@@ -181,16 +246,7 @@ export default function CreateScheduleModal({
               ))}
             </select>
           </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-700">カラー (任意)</label>
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="mt-1 h-9 w-16 cursor-pointer rounded-lg border border-gray-300 p-1"
-            />
-          </div>
+          )}
 
           <div className="mt-6 flex justify-end gap-2">
             <button

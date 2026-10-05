@@ -423,3 +423,7 @@ export const deleteCalendarMemo = async (id: string): Promise<boolean> => {
     return false;
   }
 };
+
+/*export const updateUserProfile = async (inputData:): Promise<>=>{
+
+}*/

@@ -1,16 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+
+// SSR時とCSR時で正しいマウント状態を取得するためのフック定義
+const emptySubscribe = () => () => {};
+const useIsMounted = () =>
+  useSyncExternalStore(
+    emptySubscribe,
+    () => true,  // クライアント側（ブラウザ）では true
+    () => false  // サーバー側（SSR）では false
+  );
 
 export default function ArtLightbox({ src, alt }: { src: string; alt: string }) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  // SSR（Next.js）での createPortal エラーを防止するためのマウント判定
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const isMounted = useIsMounted();
 
   return (
     <>
@@ -27,7 +31,7 @@ export default function ArtLightbox({ src, alt }: { src: string; alt: string }) 
       </div>
 
       {/* 2. モーダル表示部分（createPortal で document.body 直下に展開） */}
-      {open && mounted && createPortal(
+      {open && isMounted && createPortal(
         <div
           onClick={() => setOpen(false)}
           className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 cursor-zoom-out animate-in fade-in duration-150"

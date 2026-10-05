@@ -40,8 +40,8 @@ export async function loginAction(formData: FormData) {
     return { error: 'サーバーとの通信に失敗しました' };
   }
 }
-
-export const handleLogin = async (credentials: LoginFormData) => {
+//今後のrailsログイン機能の準備だよ
+/*export const handleLogin = async (credentials: LoginFormData) => {
   const response = await fetch('http://localhost:3001/api/v1/login', {
     method: 'POST',
     headers: {
@@ -95,7 +95,7 @@ export const handleSignUp = async (formData: SignUpFormData) => {
     const errorData = await response.json();
     console.error('登録失敗:', errorData.status.errors);
   }
-};
+};*/
 
 export const fetchUserProfile = async () => {
   const token = localStorage.getItem('token'); // 例: "Bearer eyJhbGci..."

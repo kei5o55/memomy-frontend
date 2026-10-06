@@ -1,5 +1,5 @@
-import { useState, } from "react";
-import type { ChangeEvent,FormEvent } from "react";
+import { useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { saveUserProfileIdb } from "../logic/storage-idb";
 import type { User } from "../logic/types";
 
@@ -20,10 +20,10 @@ export default function UserProfileModal({
   const [name, setName] = useState(currentUser?.name ?? "");
   const [bio, setBio] = useState(currentUser?.bio ?? "");
   const [bgmUrl, setBgmUrl] = useState(currentUser?.bgmUrl ?? "");
-  const [snsUrl,setsnsUrl] = useState(currentUser?.snsUrl ?? "");
+  const [snsUrl, setSnsUrl] = useState(currentUser?.snsUrl ?? "");
 
-  // 画像プレビュー用
-  const [, setIconFile] = useState<File | undefined>(undefined);
+  // 画像選択用ステート
+  const [iconFile, setIconFile] = useState<File | undefined>(undefined);
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     currentUser?.icon ?? null
   );
@@ -41,19 +41,37 @@ export default function UserProfileModal({
     }
   };
 
+  // ファイルを Promise で Base64 文字列に変換するヘルパー関数
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
   // フォーム送信処理
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    console.log("保存押された");
     setIsSubmitting(true);
 
     try {
-      const updatedUser:User={
+      // 新しい画像ファイルが選択されていれば Base64 変換、なければ既存の icon を使用
+      let iconResult = currentUser?.icon ?? "";
+      if (iconFile) {
+        iconResult = await convertFileToBase64(iconFile);
+      }
+
+      const updatedUser: User = {
         ...currentUser,
-        id:currentUser.id,
-        name:name,
-        bio:bio,
-        bgmUrl:bgmUrl,
+        id: currentUser.id,
+        icon: iconResult,
+        name: name,
+        bio: bio,
+        bgmUrl: bgmUrl,
+        //snsUrl: snsUrl, // SNSリンクは未実装
+        updatedAt: Date.now(),
       };
 
       await saveUserProfileIdb(updatedUser);
@@ -166,14 +184,16 @@ export default function UserProfileModal({
               YouTubeやSoundCloudなどの共有リンク
             </p>
           </div>
-          <div className="space-y-1">{/*snsリンク(永続化や複数保持は今後) */}
+
+          {/* SNSリンク */}
+          <div className="space-y-1">
             <label className="block text-sm font-medium text-slate-700">
               SNSリンク
             </label>
             <input
               type="url"
               value={snsUrl}
-              onChange={(e) => setsnsUrl(e.target.value)}
+              onChange={(e) => setSnsUrl(e.target.value)}
               placeholder="https://pixiv.net/..."
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all text-sm"
             />
@@ -188,14 +208,14 @@ export default function UserProfileModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50"
+              className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
             >
               キャンセル
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !name.trim()}
-              className="px-5 py-2.5 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors shadow-sm disabled:opacity-50"
+              className="px-5 py-2.5 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
             >
               {isSubmitting ? "保存中..." : "保存する"}
             </button>

@@ -20,6 +20,7 @@ export default function UserProfileModal({
   const [name, setName] = useState(currentUser?.name ?? "");
   const [bio, setBio] = useState(currentUser?.bio ?? "");
   const [bgmUrl, setBgmUrl] = useState(currentUser?.bgmUrl ?? "");
+  const [snsUrl,setsnsUrl] = useState(currentUser?.snsUrl ?? "");
 
   // 画像プレビュー用
   const [, setIconFile] = useState<File | undefined>(undefined);
@@ -163,6 +164,21 @@ export default function UserProfileModal({
             />
             <p className="text-xs text-slate-400">
               YouTubeやSoundCloudなどの共有リンク
+            </p>
+          </div>
+          <div className="space-y-1">{/*snsリンク(永続化や複数保持は今後) */}
+            <label className="block text-sm font-medium text-slate-700">
+              SNSリンク
+            </label>
+            <input
+              type="url"
+              value={snsUrl}
+              onChange={(e) => setsnsUrl(e.target.value)}
+              placeholder="https://pixiv.net/..."
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all text-sm"
+            />
+            <p className="text-xs text-slate-400">
+              Xやpixivなどのリンク
             </p>
           </div>
 

@@ -212,130 +212,127 @@ export default function UserProfilePage() {
       </div>
 
       <header className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-1">
-          {/* 隠し input[type="file"] */}
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleIconChange}
-            accept="image/*"
-            className="hidden"
+  <div className="flex items-center gap-4 flex-1 min-w-0 w-full sm:w-auto">
+    {/* 隠し input[type="file"] */}
+    <input
+      type="file"
+      ref={fileInputRef}
+      onChange={handleIconChange}
+      accept="image/*"
+      className="hidden"
+    />
+
+    {/* アイコン選択エリア */}
+    <div
+      onClick={() => fileInputRef.current?.click()}
+      className="relative group cursor-pointer shrink-0"
+      title="アイコン画像を変更"
+    >
+      {user.icon ? (
+        <img
+          src={user.icon}
+          alt={user.name}
+          className="w-16 h-16 rounded-full object-cover shadow-md border border-slate-200"
+        />
+      ) : (
+        <div className="w-16 h-16 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-2xl shadow-md">
+          {user.name ? user.name.charAt(0).toUpperCase() : "K"}
+        </div>
+      )}
+
+      {/* ホバー時にカメラアイコンのオーバーレイ表示 */}
+      <div className="absolute inset-0 bg-slate-900/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <svg
+          className="w-6 h-6 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
           />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+      </div>
+    </div>
 
-          {/* アイコン選択エリア */}
+    {/* ユーザー情報エリア */}
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-2 group mb-1">
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 truncate">
+          {user.name}
+        </h1>
+      </div>
+      <p className="text-sm text-slate-500 line-clamp-2">{user.bio}</p>
+    </div>
+
+    {/* アチーブメントバッジエリア (最大3つ表示) */}
+    <div className="hidden lg:flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl shrink-0">
+      {user.badges && user.badges.length > 0 ? (
+        user.badges.slice(0, 3).map((badge) => (
           <div
-            onClick={() => fileInputRef.current?.click()}
-            className="relative group cursor-pointer shrink-0"
-            title="アイコン画像を変更"
+            key={badge.id}
+            className="relative group flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-lg shadow-2xs hover:border-sky-300 hover:shadow-xs transition-all cursor-default"
           >
-            {user.icon ? (
-              <img
-                src={user.icon}
-                alt={user.name}
-                className="w-16 h-16 rounded-full object-cover shadow-md border border-slate-200"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-2xl shadow-md">
-                {user.name ? user.name.charAt(0).toUpperCase() : "K"}
-              </div>
-            )}
+            <span className="text-base select-none">{badge.icon}</span>
+            <span className="text-xs font-bold text-slate-700 max-w-[80px] truncate">
+              {badge.name}
+            </span>
 
-            {/* ホバー時にカメラアイコンのオーバーレイ表示 */}
-            <div className="absolute inset-0 bg-slate-900/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg
-                className="w-6 h-6 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
+            {/* ホバー時のツールチップ（説明表示） */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 w-max max-w-[180px] p-2 bg-slate-900 text-white text-[10px] rounded-lg shadow-lg pointer-events-none transition-opacity">
+              <p className="font-semibold text-sky-300">{badge.name}</p>
+              <p className="text-slate-300 leading-tight mt-0.5">{badge.description}</p>
             </div>
           </div>
-
-          <div className="flex-1 min-w-0">
-            {isEditingName ? (
-              <div className="flex items-center gap-2 mb-1">
-                <input
-                  type="text"
-                  value={userNameInput}
-                  onChange={(e) => setUserNameInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleUserNameChange();
-                    if (e.key === "Escape") {
-                      setUserNameInput(user.name);
-                      setIsEditingName(false);
-                    }
-                  }}
-                  autoFocus
-                  className="text-2xl font-extrabold text-slate-900 bg-white border border-sky-500 rounded-xl px-3 py-1 focus:outline-none focus:ring-2 focus:ring-sky-500 w-full"
-                />
-                <button
-                  onClick={handleUserNameChange}
-                  className="text-xs font-semibold text-white bg-sky-600 hover:bg-sky-700 px-3 py-2 rounded-xl transition-colors shrink-0 cursor-pointer"
-                >
-                  保存
-                </button>
-                <button
-                  onClick={() => {
-                    setUserNameInput(user.name);
-                    setIsEditingName(false);
-                  }}
-                  className="text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-xl transition-colors shrink-0 cursor-pointer"
-                >
-                  キャンセル
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 group mb-1">
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 truncate">
-                  {user.name}
-                </h1>
-              </div>
-            )}
-            <p className="text-sm text-slate-500 line-clamp-2">{user.bio}</p>
-          </div>
-
-          <button
-            onClick={() => setIsEditOpen(true)}
-            className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
-          >
-            編集
-          </button>
+        ))
+      ) : (
+        // バッジ未取得時のプレースホルダー表示
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium px-1">
+          <span className="text-sm">🏆</span>
+          <span>バッジ未設定</span>
         </div>
+      )}
+    </div>
 
-        {/* 作業BGM入力 / リンク表示 */}
-        <div className="w-full sm:w-80 bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2 shrink-0">
-          <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-             よく聞く作業用BGM 
-          </span>
-          {user.bgmUrl ? (
-            <a
-              href={user.bgmUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-sky-600 hover:underline block truncate font-medium"
-            >
-              ▶ BGMを開く: {user.bgmUrl}
-            </a>
-          ) : (
-            <span className="text-xs text-slate-400 block">
-              BGM URLが設定されていません 
-            </span>
-          )}
-        </div>
-      </header>
+    {/* 編集ボタン */}
+    <button
+      onClick={() => setIsEditOpen(true)}
+      className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-1.5 shrink-0"
+    >
+      編集
+    </button>
+  </div>
+
+  {/* 作業BGM入力 / リンク表示 */}
+  <div className="w-full sm:w-80 bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2 shrink-0">
+    <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
+      よく聞く作業用BGM
+    </span>
+    {user.bgmUrl ? (
+      <a
+        href={user.bgmUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-xs text-sky-600 hover:underline block truncate font-medium"
+      >
+        ▶ BGMを開く: {user.bgmUrl}
+      </a>
+    ) : (
+      <span className="text-xs text-slate-400 block">
+        BGM URLが設定されていません
+      </span>
+    )}
+  </div>
+</header>
 
       {/* 統計カード */}
       <TotalStatsCard commits={commitsAll} projects={projects} />

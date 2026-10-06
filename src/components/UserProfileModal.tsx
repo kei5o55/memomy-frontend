@@ -25,9 +25,12 @@ export default function UserProfileModal({
     if (Array.isArray(currentUser?.snsUrls) && currentUser.snsUrls.length > 0) {
       return currentUser.snsUrls;
     }
-    // 過去の単一文字列プロパティ (snsUrl) が残っている場合の互換性ケア
-    if ((currentUser as any)?.snsUrl) {
-      return [(currentUser as any).snsUrl];
+    // currentUser オブジェクト内に古い 'snsUrl' プロパティが存在するか安全に確認
+    if (currentUser && "snsUrl" in currentUser && typeof (currentUser as { snsUrl?: unknown }).snsUrl === "string") {
+      const oldSnsUrl = (currentUser as { snsUrl?: string }).snsUrl;
+      if (oldSnsUrl) {
+        return [oldSnsUrl];
+      }
     }
     return [""]; // 初期表示用に1つの空入力枠
   });

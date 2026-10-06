@@ -6,6 +6,7 @@ import TotalStatsCard from "../../components/TotalStatsCard";
 import UserProfileModal from "../../components/UserProfileModal";
 import ArtLightbox from "../../components/ArtLightbox";
 import ContributionHeatmap from "../../components/ContributionHeatmap";
+import  DomainIconHelper  from "@/logic/domainIconHelper";
 import Link from "next/link";
 import {
   loadProjectsIdb,
@@ -193,8 +194,28 @@ export default function UserProfilePage() {
                 {user.name}
               </h1>
             </div>
-            <p className="text-sm text-slate-500 line-clamp-2">{user.bio}</p>
+            <p className="text-sm text-slate-500 line-clamp-2 mb-3">{user.bio}</p>
           </div>
+          
+          {/* SNSリンク遷移ボタンエリア */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {user.snsUrls && user.snsUrls.length > 0 ? (
+                user.snsUrls.map((url, index) => (
+                  <a
+                    key={index}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 rounded-xl transition-colors shrink-0"
+                    title={url}
+                  >
+                    <DomainIconHelper url={url} />
+                  </a>
+                ))
+              ) : (
+                <span className="text-xs text-slate-400">SNSリンク未設定</span>
+              )}
+            </div>
 
           {/* アチーブメントバッジエリア (最大3つ表示) */}
           <div className="hidden lg:flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl shrink-0">

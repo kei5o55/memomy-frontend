@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 
 // SSR時とCSR時で正しいマウント状態を取得するためのフック定義
 const emptySubscribe = () => () => {};
@@ -37,7 +38,7 @@ export default function ArtLightbox({ src, alt }: { src: string; alt: string }) 
           className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 cursor-zoom-out animate-in fade-in duration-150"
         >
           <div className="relative w-full h-full max-w-5xl max-h-[90vh] flex items-center justify-center pointer-events-none">
-            <img
+            <Image
               src={src}
               alt={alt}
               className="max-w-full max-h-full object-contain shadow-2xl rounded-sm pointer-events-auto"

@@ -44,6 +44,7 @@ type Props = {
   onSave: () => void;
   onSaveAndContinue: () => void;
   onCancel: () => void;
+  onDiscard?:()=>void;
 };
 
 export default function CommitModal({
@@ -54,6 +55,7 @@ export default function CommitModal({
   onSave,
   onSaveAndContinue,
   onCancel,
+  onDiscard,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
 
@@ -291,13 +293,26 @@ export default function CommitModal({
 
         {/* フッターアクション */}
         <div className="flex items-center justify-between gap-2 mt-8 pt-4 border-t border-zinc-100 flex-wrap">
-          <button
-            onClick={onCancel}
-            className="text-sm font-medium text-zinc-600 bg-zinc-100 hover:bg-zinc-200 py-2 px-4 rounded-xl transition-colors cursor-pointer"
-          >
-            キャンセル
-          </button>
+          {/* 左側アクション：キャンセル & 保存せず終了 */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onCancel}
+              className="text-sm font-medium text-zinc-600 bg-zinc-100 hover:bg-zinc-200 py-2 px-4 rounded-xl transition-colors cursor-pointer"
+            >
+              キャンセル
+            </button>
+            {mode === "timer" && (
 
+            <button
+              onClick={onDiscard} // ※必要に応じて props やハンドラー名を調整してください (例: onDiscard, onExitWithoutSave)
+              className="text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 py-2 px-4 rounded-xl transition-colors cursor-pointer"
+            >
+              保存せず終了
+            </button>
+            )}
+          </div>
+
+          {/* 右側アクション：保存系ボタン */}
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={onSave}

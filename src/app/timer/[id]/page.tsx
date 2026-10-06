@@ -833,6 +833,16 @@ export default function TimerPage({
             // 保存失敗時はセッションを消さずに保護
           }
         }}
+        onDiscard={async()=>{
+          if (!draftCommit || !projectId) return;
+
+          try{
+            await clearSessionsIdb();
+            router.push("/");
+          }catch(error){
+            console.error("Failed to save commit:", error);
+          }
+        }}
       />
     </main>
   );

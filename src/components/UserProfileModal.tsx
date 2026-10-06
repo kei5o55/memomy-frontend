@@ -20,7 +20,41 @@ export default function UserProfileModal({
   const [name, setName] = useState(currentUser?.name ?? "");
   const [bio, setBio] = useState(currentUser?.bio ?? "");
   const [bgmUrl, setBgmUrl] = useState(currentUser?.bgmUrl ?? "");
-  const [snsUrl, setSnsUrl] = useState(currentUser?.snsUrl ?? "");
+  // 初期値：currentUser.snsUrls（なければ単一文字列からのフォールバック、または空配列）
+  const [snsUrls, setSnsUrls] = useState<string[]>(() => {
+    if (Array.isArray(currentUser?.snsUrls) && currentUser.snsUrls.length > 0) {
+      return currentUser.snsUrls;
+    }
+    // 過去の単一文字列プロパティ (snsUrl) が残っている場合の互換性ケア
+    if ((currentUser as any)?.snsUrl) {
+      return [(currentUser as any).snsUrl];
+    }
+    return [""]; // 初期表示用に1つの空入力枠
+  });
+
+  // 特定インデックスのURL変更
+  const handleSnsUrlChange = (index: number, value: string) => {
+    const updated = [...snsUrls];
+    updated[index] = value;
+    setSnsUrls(updated);
+  };
+
+  // 入力枠の追加（最大4つまで）
+  const handleAddSnsUrl = () => {
+    if (snsUrls.length < 4) {
+      setSnsUrls([...snsUrls, ""]);
+    }
+  };
+
+  // 特定インデックスの枠を削除
+  const handleRemoveSnsUrl = (index: number) => {
+    // 枠が1つだけの場合は空文字にして残す、複数あれば配列から削除
+    if (snsUrls.length === 1) {
+      setSnsUrls([""]);
+    } else {
+      setSnsUrls(snsUrls.filter((_, i) => i !== index));
+    }
+  };
 
   // 画像選択用ステート
   const [iconFile, setIconFile] = useState<File | undefined>(undefined);
@@ -63,6 +97,11 @@ export default function UserProfileModal({
         iconResult = await convertFileToBase64(iconFile);
       }
 
+      // 空の入力枠やスペースのみの要素を除外
+      const cleanedSnsUrls = snsUrls
+        .map((url) => url.trim())
+        .filter((url) => url !== "");
+
       const updatedUser: User = {
         ...currentUser,
         id: currentUser.id,
@@ -70,7 +109,7 @@ export default function UserProfileModal({
         name: name,
         bio: bio,
         bgmUrl: bgmUrl,
-        //snsUrl: snsUrl, // SNSリンクは未実装
+        snsUrls: cleanedSnsUrls, // 配列形式で反映
         updatedAt: Date.now(),
       };
 
@@ -163,7 +202,7 @@ export default function UserProfileModal({
               rows={3}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="好きな技術や日常について"
+              placeholder="自己紹介"
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all text-sm resize-none"
             />
           </div>
@@ -185,20 +224,54 @@ export default function UserProfileModal({
             </p>
           </div>
 
-          {/* SNSリンク */}
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-slate-700">
-              SNSリンク
-            </label>
-            <input
-              type="url"
-              value={snsUrl}
-              onChange={(e) => setSnsUrl(e.target.value)}
-              placeholder="https://pixiv.net/..."
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all text-sm"
-            />
+          {/* SNSリンク（複数入力対応 / 最大4つ） */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-slate-700">
+                SNSリンク <span className="text-xs font-normal text-slate-400">（最大4つ）</span>
+              </label>
+              {snsUrls.length < 4 && (
+                <button
+                  type="button"
+                  onClick={handleAddSnsUrl}
+                  className="text-xs font-semibold text-sky-600 hover:text-sky-700 flex items-center gap-1 cursor-pointer"
+                >
+                  ＋ リンクを追加
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              {snsUrls.map((url, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={url}
+                    onChange={(e) => handleSnsUrlChange(index, e.target.value)}
+                    placeholder={
+                      index === 0
+                        ? "https://x.com/..."
+                        : index === 1
+                        ? "https://pixiv.net/..."
+                        : "https://..."
+                    }
+                    className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all text-sm"
+                  />
+                  {(snsUrls.length > 1 || url !== "") && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSnsUrl(index)}
+                      className="p-2 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
+                      title="削除"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
             <p className="text-xs text-slate-400">
-              Xやpixivなどのリンク
+              X、pixiv、HPなどSNSのURL
             </p>
           </div>
 

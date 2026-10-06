@@ -22,7 +22,7 @@ export type User = {
   iconBlob?: Blob | File;
   bio?: string;
   bgmUrl?: string; // 作業BGMリンク用
-  snsUrl?: string[];//SNSのリンク用（Twitter・個人サイトなど複数モテるように）
+  snsUrls?: string[];//SNSのリンク用（Twitter・個人サイトなど複数モテるように）
   badges?: Badge[];
   createdAt?: number;
   updatedAt?: number;

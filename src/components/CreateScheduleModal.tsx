@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { DaySchedule, Project,CalendarMemo } from "../logic/types";
+import type { DaySchedule, Project } from "../logic/types";
 
 type Mode = "schedule" | "memo";
 

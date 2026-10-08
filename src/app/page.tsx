@@ -5,7 +5,7 @@ import type { NewProjectInput } from "../logic/api-types";
 import CreateProjectModal from "../components/CreateProjectModal";
 import type { Project, Commit, WorkSession } from "../logic/types";
 import ConfirmModal from "../components/ConfirmModal";
-import CalendarBoard from "../components/CalendarLogic/CalendarBoard";
+import CalendarBoard from "../components/calendar/CalendarBoard"
 import CommitModal, { type DraftCommit } from "../components/CommitModal"; 
 import {
   loadProjectsIdb,

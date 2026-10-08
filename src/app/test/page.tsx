@@ -1,4 +1,4 @@
-import { localUser } from "../../logic/types"
+import { localUser } from "../../logic/dummyDate"
 import type { User } from "../../logic/types"
 import Link from "next/link"
 

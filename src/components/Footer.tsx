@@ -21,18 +21,14 @@ export default function Footer() {
           >
             About
           </Link>
+          ・
           <Link
-            href=""
-            className="transition-colors hover:text-slate-900 dark:hover:text-white opacity-30"
+            href="/contact"
+            className="transition-colors hover:text-slate-900 dark:hover:text-white"
           >
-            利用規約
+            お問い合わせ（不具合報告・改善要望など）
           </Link>
-          <Link
-            href="/privacy"
-            className="transition-colors hover:text-slate-900 dark:hover:text-white opacity-30"
-          >
-            プライバシーポリシー
-          </Link>
+          ・
           <a
             href="https://github.com/kei5o55/memomy-frontend"
             target="_blank"

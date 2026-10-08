@@ -1,4 +1,4 @@
-import type { CalendarMemo, Commit, DaySchedule, Project } from "./types";
+import type { CalendarMemo, Commit, DaySchedule, Project,User } from "./types";
 
 export type NewProjectInput = Omit<Project,"id" | "createdAt" | "completed">
 
@@ -12,6 +12,8 @@ export type NewCommitInput = Omit<Commit, 'id' | 'durationMs'>;
 export type NewDayScheduleInput= Omit<DaySchedule, 'id'>;
 
 export type NewCalendarMemoInput= Omit<CalendarMemo,'id' | 'createdAt'>;
+
+export type NewUserProfile = Omit<User,`id`|`icon`|`ionBlob`|`bio`|`bgmUrl`|`snsUrl`|`badges`|`createdAt`|`updatedAt`>;
 
 export type ApiDayScheduleRes = {
   id: string;
@@ -41,5 +43,6 @@ export type ApiCalendarMemosRes ={
     text: string,
     created_at: number
 }
+
 
 

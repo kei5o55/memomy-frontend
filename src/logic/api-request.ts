@@ -1,5 +1,5 @@
 import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput, ApiCalendarMemosRes } from "./api-types";
-import type { Project, Commit, DaySchedule, CalendarMemo,  } from "./types";
+import type { Project, Commit, DaySchedule, CalendarMemo,User  } from "./types";
 import type { ApiDayScheduleRes,ApiProjectResponse } from "./api-types";
 import { BASE_URL } from "./url";
 
@@ -424,6 +424,29 @@ export const deleteCalendarMemo = async (id: string): Promise<boolean> => {
   }
 };
 
-/*export const updateUserProfile = async (inputData:): Promise<>=>{
 
+/*
+export const createUser = async(inputData: NewUserProfile):Promise<User | null> => {
+
+}
+
+export const loadUserProfile = async ():Promise<User | null>=>{
+  try{
+    const response =await fetch(`${BASE_URL}/user`);
+
+    if(!response.ok){
+      console.log(`Userデータ取得エラー :status${response.status}`)
+    }
+    return null;
+  }catch(error){
+    return null;//nullが帰ると上手く言ってないってコト
+  }
+};
+
+export const updateUserProfile = async (inputData:User): Promise<User | null>=>{
+  try{
+    return null;
+  }catch(error){
+    return null;
+  }
 }*/

@@ -11,6 +11,9 @@
     "test": "vitest",
     "test:run": "vitest run"
   },
+  "overrides": {
+    "undici": "^6.19.0"
+  },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
     "idb": "^8.0.3",

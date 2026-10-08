@@ -436,6 +436,7 @@ export default function ProjectsPage() {
               const remain = due ? daysUntil(due) : null;
               const latest = latestCommitMap.get(p.id);
               const imageUrl = latest ? getImageUrl(latest) : null;
+              const imageId =latest?.id;//コミットのid
               const activeSession = sessionsAll.find(
                 (s) => s.projectId === p.id && s.endedAt == null
               );
@@ -542,11 +543,13 @@ export default function ProjectsPage() {
 
                     {imageUrl && (
                       <div className="shrink-0 w-full sm:w-auto">
+                        <Link href={`/commits/${imageId}`}>
                         <img
+                          
                           src={imageUrl}
                           alt="latest commit"
                           className="h-28 sm:h-32 w-full sm:w-48 object-cover rounded-xl border border-slate-200 shadow-sm"
-                        />
+                        /></Link>
                       </div>
                     )}
                   </div>

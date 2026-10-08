@@ -1,6 +1,6 @@
 import { openDB, type DBSchema } from "idb";
 import type { Project, WorkSession, Commit, CalendarMemo, DaySchedule, User} from "./types";
-import {initialuUser} from "./types";
+import {initialuUser} from "./dummyDate";
 
 export const IDB_NAME = "worklog-db";
 export const IDB_VERSION = 3; // userProfileストア追加のためバージョンアップ (2 -> 3)

@@ -6,6 +6,7 @@ import TotalStatsCard from "../../components/TotalStatsCard";
 import UserProfileModal from "../../components/UserProfileModal";
 import ArtLightbox from "../../components/ArtLightbox";
 import ContributionHeatmap from "../../components/ContributionHeatmap";
+import BadgeBoard from "@/components/BadgeBoard";
 import  DomainIconHelper  from "@/logic/domainIconHelper";
 import Link from "next/link";
 import {
@@ -17,6 +18,8 @@ import {
 
 import { loadProjects,loadCommits } from "../../logic/api-request";
 import { HOST_URL } from "@/logic/url";
+
+import  {MASTER_BADGES}  from "@/logic/dummyDate";
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
@@ -216,35 +219,8 @@ export default function UserProfilePage() {
                 <span className="text-xs text-slate-400">SNSリンク未設定</span>
               )}
             </div>
-
-          {/* アチーブメントバッジエリア (最大3つ表示) */}
-          <div className="hidden lg:flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl shrink-0">
-            {user.badges && user.badges.length > 0 ? (
-              user.badges.slice(0, 3).map((badge) => (
-                <div
-                  key={badge.id}
-                  className="relative group flex items-center gap-1.5 px-2.5 py-1 bg-white border border-slate-200 rounded-lg shadow-2xs hover:border-sky-300 hover:shadow-xs transition-all cursor-default"
-                >
-                  <span className="text-base select-none">{badge.icon}</span>
-                  <span className="text-xs font-bold text-slate-700 max-w-[80px] truncate">
-                    {badge.name}
-                  </span>
-
-                  {/* ホバー時のツールチップ（説明表示） */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 w-max max-w-[180px] p-2 bg-slate-900 text-white text-[10px] rounded-lg shadow-lg pointer-events-none transition-opacity">
-                    <p className="font-semibold text-sky-300">{badge.name}</p>
-                    <p className="text-slate-300 leading-tight mt-0.5">{badge.description}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              // バッジ未取得時のプレースホルダー表示
-              <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium px-1">
-                <span className="text-sm">🏆</span>
-                <span>バッジ未設定</span>
-              </div>
-            )}
-          </div>
+          {/*バッジ表示部*/}
+          <BadgeBoard badges={user.badges}></BadgeBoard>
 
           {/* 編集ボタン */}
           <button
@@ -366,6 +342,7 @@ export default function UserProfilePage() {
           open={isEditOpen}
           onClose={() => setIsEditOpen(false)}
           currentUser={user}
+          allBadges={MASTER_BADGES}
           onSuccess={(updated) => {
             setUserProfile(updated);
             setIsEditOpen(false);

@@ -8,11 +8,12 @@ export type IconImage = {//railsのアクティブストレージでurlを受け
   url: string;
 };
 
-type Badge = {
+export type Badge = {
   id: string;
   name: string;        // 例: "100時間突破", "皆勤賞", "初コミット"
   icon: string;        // 例: "🔥", "🎨", "⚡" などの絵文字や画像URL
   description: string; // 例: "累計作業時間が100時間を超えました"
+  unlockedAt?: number; // 獲得日時 (オプショナル: 獲得判定用)
 };
 
 export type User = {

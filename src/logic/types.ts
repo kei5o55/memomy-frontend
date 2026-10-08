@@ -25,6 +25,7 @@ export type User = {
   bgmUrl?: string; // 作業BGMリンク用
   snsUrls?: string[];//SNSのリンク用（Twitter・個人サイトなど複数モテるように）
   badges?: Badge[];
+  todo?: string[];//ユーザごとの作業todo(ラフ・線画みたいな)
   createdAt?: number;
   updatedAt?: number;
 };
@@ -113,32 +114,4 @@ export type CalendarCell = {
   schedules?: DaySchedule[];
 };
 
-export const localUser: User[] = [
-  {
-    id: "1",
-    name: "InitialUser",
-    icon:"",
-    bio: "初期ユーザーだよぅ",
-    bgmUrl: "https://soundcloud.com/bakuwara/oreranatotomodachi",
-    createdAt: 1704067200000, // 2024-01-01T00:00:00.000Z
-    updatedAt: 1709251200000, // 2024-03-01T00:00:00.000Z
-  },{
-    id: "2",
-    name: "テストユーザ２",
-    icon:"https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
-    bio: "なんふぇ？",
-    bgmUrl: "test",
-    createdAt: 1704067200000, // 2024-01-01T00:00:00.000Z
-    updatedAt: 1709251200000, // 2024-03-01T00:00:00.000Z
-  }
-];
 
-export const initialuUser:User={
-    id: "1",
-    name: "InitialUser",
-    icon:"",
-    bio: "初期ユーザーだよぅ",
-    bgmUrl: "https://soundcloud.com/bakuwara/oreranatotomodachi",
-    createdAt: 1704067200000, // 2024-01-01T00:00:00.000Z
-    updatedAt: 1709251200000, // 2024-03-01T00:00:00.000Z
-}

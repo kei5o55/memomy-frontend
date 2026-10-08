@@ -20,6 +20,7 @@ import { loadProjects,loadCommits } from "../../logic/api-request";
 import { HOST_URL } from "@/logic/url";
 
 import  {MASTER_BADGES}  from "@/logic/dummyDate";
+import CustomTodo from "@/components/CustomTodo";
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
@@ -252,9 +253,16 @@ export default function UserProfilePage() {
           )}
         </div>
       </header>
+      {/*統計カード＋カスタムTocoエリア(カスタムTodoは必要か検討) */}
+      <div className="flex gap-4">
+        <div className="flex-2">
+          <TotalStatsCard commits={commitsAll} projects={projects} />
+        </div>
 
-      {/* 統計カード */}
-      <TotalStatsCard commits={commitsAll} projects={projects} />
+        {/*<div className="flex-1">
+          <CustomTodo />
+        </div>*/}
+      </div>
 
       {/* 完了プロジェクト ＆ 進捗画像ギャラリー */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

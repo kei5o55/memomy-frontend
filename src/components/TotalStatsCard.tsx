@@ -87,6 +87,7 @@ export default function TotalStatsCard({
           </span>
           <h2 className="text-lg font-bold text-slate-100">全体の作業実績</h2>
         </div>
+
         {stats.lastActiveDate && (
           <span className="text-xs text-slate-400 bg-slate-800/80 border border-slate-700 px-3 py-1 rounded-full">
             最終作業: {stats.lastActiveDate}
@@ -94,10 +95,12 @@ export default function TotalStatsCard({
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-3 gap-3.5">
         {/* 総作業時間 */}
         <div className="bg-slate-800/60 border border-slate-700/50 p-3.5 rounded-xl space-y-1">
-          <span className="text-xs font-medium text-slate-400 block">総作業時間</span>
+          <span className="text-xs font-medium text-slate-400 block">
+            総作業時間
+          </span>
           <span className="text-xl sm:text-2xl font-extrabold text-sky-400 tracking-tight">
             {formatMsToDetailedString(stats.totalMs)}
           </span>
@@ -105,7 +108,9 @@ export default function TotalStatsCard({
 
         {/* 総コミット数 */}
         <div className="bg-slate-800/60 border border-slate-700/50 p-3.5 rounded-xl space-y-1">
-          <span className="text-xs font-medium text-slate-400 block">総ルーズリーフ数</span>
+          <span className="text-xs font-medium text-slate-400 block">
+            総ルーズリーフ数
+          </span>
           <span className="text-xl sm:text-2xl font-extrabold text-slate-100 tracking-tight">
             {stats.totalCommits}{" "}
             <span className="text-xs font-normal text-slate-400">枚</span>
@@ -114,19 +119,14 @@ export default function TotalStatsCard({
 
         {/* 稼働プロジェクト数 */}
         <div className="bg-slate-800/60 border border-slate-700/50 p-3.5 rounded-xl space-y-1">
-          <span className="text-xs font-medium text-slate-400 block">稼働プロジェクト</span>
+          <span className="text-xs font-medium text-slate-400 block">
+            稼働プロジェクト
+          </span>
           <span className="text-xl sm:text-2xl font-extrabold text-slate-100 tracking-tight">
             {stats.activeProjectsCount}{" "}
-            <span className="text-xs font-normal text-slate-400">/ {projects.length} 個</span>
-          </span>
-        </div>
-
-        {/* 進捗ギャラリー（画像付きコミット） */}
-        <div className="bg-slate-800/60 border border-slate-700/50 p-3.5 rounded-xl space-y-1">
-          <span className="text-xs font-medium text-slate-400 block">保存した進捗画像</span>
-          <span className="text-xl sm:text-2xl font-extrabold text-emerald-400 tracking-tight">
-            {stats.imageCommitsCount}{" "}
-            <span className="text-xs font-normal text-slate-400">枚</span>
+            <span className="text-xs font-normal text-slate-400">
+              / {projects.length} 個
+            </span>
           </span>
         </div>
       </div>

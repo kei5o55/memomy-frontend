@@ -43,11 +43,6 @@ export default function CommitDetailPage({
 
   const [deleteTarget,setDeleteTarget] = useState<Commit|null>(null)
 
-  // 編集用 State
-  /*const [noteInput, setNoteInput] = useState("");
-  const [isEditingNote, setIsEditingNote] = useState(false);*/
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-
   const refreshData = async () => {
     try {
       const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
@@ -103,30 +98,28 @@ export default function CommitDetailPage({
     return projects.find((p) => p.id === commit.projectId) ?? null;
   }, [projects, commit]);
 
-  useEffect(() => {
-    if (!commit) return;
-
-    //setNoteInput(commit.note ?? "");
+  // 1. imageUrl を useMemo でレンダリング時に算出
+  const imageUrl = useMemo(() => {
+    if (!commit) return null;
 
     if (commit.image?.blob) {
-      const url = URL.createObjectURL(commit.image.blob);
-      setImageUrl(url);
-
-      return () => {
-        URL.revokeObjectURL(url);
-      };
-    } else if(typeof commit.image === 'string'){
-      const fullurl =`${HOST_URL}/${commit.image}`;
-      setImageUrl(fullurl);
-
-      return () => {
-        URL.revokeObjectURL(fullurl);
-      };
-    } else {
-      setImageUrl(null);
+      return URL.createObjectURL(commit.image.blob);
     }
-    
+    if (typeof commit.image === "string") {
+      return `${HOST_URL}/${commit.image}`;
+    }
+    return null;
   }, [commit]);
+
+  // 2. Blob URL のメモリ解放（revokeObjectURL）専用の Effect
+  // （setState を呼ばないので ESLint エラーになりません）
+  useEffect(() => {
+    if (commit?.image?.blob && imageUrl) {
+      return () => {
+        URL.revokeObjectURL(imageUrl);
+      };
+    }
+  }, [commit?.image?.blob, imageUrl]);
 
   const handleDeleteCommit = async () => {
     if (!commit) return;

@@ -1,6 +1,7 @@
 //src/pages/TimerPage.tsx
 "use client";
 import { useEffect, useMemo, useRef, useState, use } from "react";
+import { startTransition } from 'react';
 import type { DraftCommit } from "../../../components/CommitModal";
 import CommitModal from "../../../components/CommitModal";
 import ArtLightbox from "@/components/ArtLightbox";
@@ -171,11 +172,14 @@ export default function TimerPage({
     [sessions, projectId]
   );
 
-  const [note, setNote] = useState<string>(activeSession?.note ?? "");
+  //ノート入力
+  const [prevSessionId, setPrevSessionId] = useState(activeSession?.id);
+  const [note, setNote] = useState(activeSession?.note ?? "");
 
-  useEffect(() => {
+  if (activeSession?.id !== prevSessionId) {
+    setPrevSessionId(activeSession?.id);
     setNote(activeSession?.note ?? "");
-  }, [activeSession?.id,activeSession?.note]);
+  }
 
   useEffect(() => {
     if (!loadedOnce) return;
@@ -228,16 +232,20 @@ export default function TimerPage({
 
     if (phase === "work") {
       playSE("/sounds/se.mp3");
-      setCompletedPomodoros((v) => v + 1);
-      setPhase("break");
-      setPhaseStartedAt(nowTs);
+      startTransition(() => {
+        setCompletedPomodoros((v) => v + 1);
+        setPhase("break");
+        setPhaseStartedAt(nowTs);
+      });
       return;
     }
 
     if (phase === "break") {
       playSE("/sounds/se.mp3");
-      setPhase("work");
-      setPhaseStartedAt(nowTs);
+      startTransition(() => {
+        setPhase("work");
+        setPhaseStartedAt(nowTs);
+      });
     }
   }, [pomodoroEnabled, activeSession, phase, currentPhaseRemainingMs]);
 

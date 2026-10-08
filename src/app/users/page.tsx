@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect  } from "react";
 import type { Project, Commit,  User } from "../../logic/types";
 import TotalStatsCard from "../../components/TotalStatsCard";
 import UserProfileModal from "../../components/UserProfileModal";
-import ArtLightbox from "../../components/ArtLightbox";
+import ArtLightbox from "../../components/minor/ArtLightbox";
 import ContributionHeatmap from "../../components/ContributionHeatmap";
 import BadgeBoard from "@/components/BadgeBoard";
 import  DomainIconHelper  from "@/logic/domainIconHelper";

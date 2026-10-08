@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, use } from "react";
 import { startTransition } from 'react';
 import type { DraftCommit } from "../../../components/CommitModal";
 import CommitModal from "../../../components/CommitModal";
-import ArtLightbox from "@/components/ArtLightbox";
+import ArtLightbox from "@/components/minor/ArtLightbox";
 import {
   loadSessionsIdb,
   saveSessionsIdb,

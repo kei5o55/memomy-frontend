@@ -15,6 +15,7 @@ export type NewCalendarMemoInput= Omit<CalendarMemo,'id' | 'createdAt'>;
 
 export type NewUserProfile = Omit<User,`id`|`icon`|`ionBlob`|`bio`|`bgmUrl`|`snsUrl`|`badges`|`createdAt`|`updatedAt`>;
 
+
 export type ApiDayScheduleRes = {
   id: string;
   date: string; // YYYY-MM-DD

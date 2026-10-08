@@ -1,21 +1,21 @@
 // src/pages/CalendarPage.tsx
 import { useEffect, useState } from "react";
-import ScheduleCalendar from "../components/ScheduleCalendar";
-import CalendarDayDetail from "../components/CalendarDayDetail";
+import ScheduleCalendar from "./ScheduleCalendar";
+import CalendarDayDetail from "./CalendarDayDetail";
 import {
   addCalendarMemoIdb,
   loadCalendarMemosIdb,
   loadCommitsIdb,
   loadProjectsIdb,
   deleteCalendarMemoIdb,
-} from "../logic/storage-idb";
+} from "../../logic/storage-idb";
 import type {
   CalendarCell,
   Project,
   CalendarMemo,
   Commit,
-} from "../logic/types";
-import { loadProjects,loadCalendarMemos,loadCommits,createCalendarMemo,deleteCalendarMemo } from "../logic/api-request";
+} from "../../logic/types";
+import { loadProjects,loadCalendarMemos,loadCommits,createCalendarMemo,deleteCalendarMemo } from "../../logic/api-request";
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 

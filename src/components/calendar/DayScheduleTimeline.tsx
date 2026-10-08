@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Commit, Project, DaySchedule } from "../logic/types";
+import type { Commit, Project, DaySchedule } from "../../logic/types";
 
 type Props = {
   schedules: DaySchedule[];

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { migrateIdbToPostgres } from "../logic/migration";
+import { migrateIdbToPostgres } from "../../logic/migration";
 
 export function DataMigrationButton() {
   const [loading, setLoading] = useState(false);

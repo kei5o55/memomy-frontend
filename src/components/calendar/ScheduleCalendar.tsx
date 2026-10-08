@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
-import { buildCalendarCells } from "../logic/calendar";
+import { buildCalendarCells } from "../../logic/calendar";
 import type {
   CalendarCell,
   CalendarMemo,
   Commit,
   Project,
-} from "../logic/types";
+} from "../../logic/types";
 
 type Props = {
   year: number;

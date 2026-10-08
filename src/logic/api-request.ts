@@ -5,6 +5,11 @@ import { BASE_URL } from "./url";
 
 //const BASE_URL = 'http://localhost:3001/api/v1';
 
+
+//変数のケーシング（キャメルケース・スネークケース）が統一出来ていないので、ちゃんとRails側のコントローラ参照しつつやる
+//どっちかに統一したい
+
+
 // コミットを取得する API
 export const loadCommits = async (): Promise<Commit[]> => {
   try {

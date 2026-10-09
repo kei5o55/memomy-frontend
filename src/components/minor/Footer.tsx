@@ -16,8 +16,8 @@ export default function Footer() {
         {/* リンク群 */}
         <nav className="flex flex-wrap items-center justify-center gap-6 text-sm font-medium">
           <Link
-            href=""
-            className="transition-colors hover:text-slate-900 dark:hover:text-white opacity-30"
+            href="/about"
+            className="transition-colors hover:text-slate-900 dark:hover:text-white"
           >
             About
           </Link>

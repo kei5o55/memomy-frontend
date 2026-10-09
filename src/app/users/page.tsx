@@ -20,7 +20,6 @@ import { loadProjects,loadCommits } from "../../logic/api-request";
 import { HOST_URL } from "@/logic/url";
 
 import  {MASTER_BADGES}  from "@/logic/dummyDate";
-import CustomTodo from "@/components/CustomTodo";
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 

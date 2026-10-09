@@ -44,7 +44,7 @@ export default function AboutPage() {
               過程（Process）の可視化
             </p>
             <p className="text-xs text-slate-500 leading-relaxed pl-6">
-              完成した作品だけでなく、そこに到達するまでに費やした試行錯誤や集中の記録をログとして残し、確かな成長の糧にします。
+              完成した作品だけでなく、そこに到達するまでに費やした試行錯誤や作業の記録をログとして残し、確かな成長の糧にします。
             </p>
           </div>
 
@@ -63,10 +63,10 @@ export default function AboutPage() {
           <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 space-y-1">
             <p className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <span className="text-sky-600 font-mono text-xs">03.</span>
-              遊び心とゲーミフィケーション
+              制作プロセスの共有
             </p>
             <p className="text-xs text-slate-500 leading-relaxed pl-6">
-              作業時間の到達や特定の条件達成で解放されるアチーブメントバッジ。人に見せるためではなく、自らの足跡を楽しむための仕掛けです。
+              作品の完成までの過程を他者へ共有できる仕組み、AI時代において過程までを作品として公開
             </p>
           </div>
         </div>
@@ -78,8 +78,10 @@ export default function AboutPage() {
            開発者メッセージ
         </h2>
         <p className="text-xs text-slate-600 leading-relaxed">
-          モノづくりに終わりはなく、試行錯誤と探求のプロセスそのものがクリエイターの生き方だと思っている。
-          やりたいこと、描きたい絵、アイデアをプロジェクトとして蓄積して、衝動のままにタイマーを回しメモリーを蓄積する。
+          モノづくりに終わりはなく、試行錯誤と探求のプロセスそのものがクリエイターの生き方。
+          やりたいこと、描きたい絵、アイデアをプロジェクトとして蓄積して、衝動のままにタイマーを回すのだ。
+          <br/>
+          つまり何が言いたいかというと、僕は創作が好きなのだ。
         </p>
         <p className="text-xs text-slate-600 leading-relaxed">
           ふとした時に作業ログを見て達成感を感じたり、他の人の作業ログを見て刺激を受けたり、そういう小さいSNSみたいなものにできても嬉しいかなぁ。

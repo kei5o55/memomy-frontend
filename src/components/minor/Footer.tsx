@@ -10,7 +10,6 @@ export default function Footer() {
             memomy
           </span>
           <span className="text-xs text-slate-500">v0.0.1</span>
-          <span className="text-xs text-slate-500">リンクはまだ未実装</span>
         </div>
 
         {/* リンク群 */}

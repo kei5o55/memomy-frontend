@@ -458,6 +458,7 @@ export default function TimerPage({
         projectId,
         startedAt: draftCommit.startedAt,
         endedAt: draftCommit.endedAt,
+        durationMs: draftCommit.endedAt - draftCommit.startedAt,
         note: draftCommit.note,
         image: draftCommit.image
           ? {

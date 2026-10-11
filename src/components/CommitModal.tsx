@@ -13,6 +13,7 @@ export type DraftCommit = {
   projectName: string;
   startedAt: number;
   endedAt: number;
+  durationMs?:number;
   note: string;
 
   // 表示用（App側で計算して渡す）

@@ -115,6 +115,8 @@ export type CalendarCell = {
 };
 
 export type Summary = {
+  projectId:string,
+  projectName:string,
   totalDurationMs: number;
   totalMinutes: number;
   sessionCount: number;

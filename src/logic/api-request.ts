@@ -64,11 +64,9 @@ export const loadCommits = async (): Promise<Commit[]> => {
 
     const rawData = await readJson<Commit[]>(response);
 
-    console.log("送られたデータ : ", rawData);
+    console.log("komittoパースデータ : ", rawData);
 
     const commits = rawData.map(toCommit);
-
-    console.log("取得データ: ", commits);
 
     return commits;
   } catch (error) {
@@ -146,7 +144,7 @@ export const deleteCommit = async (id:string): Promise<boolean> =>{
   }
 }
 
-// プロジェクトを取得する API
+// プロジェクトを取得する API 
 export const loadProjects = async (): Promise<Project[]> => {
   try {
     const response = await fetch(`${BASE_URL}/projects`);
@@ -154,8 +152,11 @@ export const loadProjects = async (): Promise<Project[]> => {
     if (!response.ok) {
       throw new Error(`HTTPエラー! status: ${response.status}`);
     }
+    console.log("projectのres:",response)
 
     const rawData = await readJson<ApiProjectRes[]>(response);
+
+    console.log("projectのrawData:",rawData)
 
     return rawData.map(toProject);
   } catch (error) {
@@ -361,32 +362,24 @@ export const deleteCalendarMemo = async (id: string): Promise<boolean> => {
   }
 };
 
-export const projectSummary = async (id: string): Promise<Summary| null> => {
+//Idごとにサマリを取得（他loadと一緒で、現在は全プロジェクトを参照。将来的にユーザ別）
+export const projectSummary = async (): Promise<Summary[]> => {
   try{ 
-    const response = await fetch(`${BASE_URL}/projects/${id}/summary`);
-    console.log(`送られたデータ: `,response)
+
+    const response = await fetch(`${BASE_URL}/projects/summary`);
     if(!response.ok){
       console.error(`httpエラー: ${response.status}`);
     };
 
-    
-
-    const rawData = await readJson<Summary>(response);
-    console.log(`パース後のデータ: `,rawData)
-    /*{将来的にprojectIdも入れて、該当idを表示みたいな
-        "total_duration_ms": 2103660,
-        "total_minutes": 35,
-        "session_count": 2,
-        "last_commit_at": "2026-10-11T09:01:08.000Z"
-    } */
+    const rawData = await readJson<Summary[]>(response);
+    console.log(`サマリパース後のデータ: `,rawData)
 
     return rawData;
 
   }catch(error){
-    return null;
+    return [];
   }
 }
-
 
 /*
 export const createUser = async(inputData: NewUserProfile):Promise<User | null> => {//初期登録時の

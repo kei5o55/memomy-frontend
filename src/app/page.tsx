@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { NewProjectInput } from "../logic/api-types";
 import CreateProjectModal from "../components/CreateProjectModal";
-import type { Project, Commit, WorkSession } from "../logic/types";
+import type { Project, Commit, WorkSession,Summary } from "../logic/types";
 import ConfirmModal from "../components/ConfirmModal";
 import CalendarBoard from "../components/calendar/CalendarBoard"
 import CommitModal, { type DraftCommit } from "../components/CommitModal"; 
@@ -51,6 +51,7 @@ function calcTodayTotalMs(commits: Commit[]): number {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [commitsAll, setCommitsAll] = useState<Commit[]>([]);
+  const [summary,setSummary] = useState<Summary[]>([]);
   const [loading, setLoading] = useState(true);
 
   // ダイレクトコミット用State
@@ -70,15 +71,18 @@ export default function ProjectsPage() {
   const [activeTab, setActiveTab] = useState<"calender" | "active" | "completed">("active");
 
   const refresh = async () => {
-    const [nextProjects, nextCommits, nextSessions] = await Promise.all([//
+    const [nextProjects, nextCommits, nextSessions, nextSummary] = await Promise.all([//
       isApiMode ? loadProjects() : loadProjectsIdb(),
       isApiMode ? loadCommits() : loadCommitsIdb(),
       loadSessionsIdb(), // Sessions はモードに関わらず常に IndexedDB から取得
+      projectSummary()
+      
     ]);
-
+    console.log("nextSummary:",nextSummary);
     setProjects(nextProjects);//一つでもなにかおかしい事あったら再リロードみたいにしてもいいかもしれ
     setCommitsAll(nextCommits);
     setSessionsAll(nextSessions);
+    setSummary(nextSummary);
   };
 
   useEffect(() => {
@@ -456,16 +460,23 @@ export default function ProjectsPage() {
                   {/* Top Bar: Name, Status & Actions */}
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <h2
-                        className={`text-xl font-bold tracking-tight ${
-                          p.completed
-                            ? "line-through text-slate-500"
-                            : "text-slate-900"
-                        }`}
-                      >
-                        {p.name}
-                        <span className="text-sm text-slate-400">ここに総合時間を表示</span>
-                      </h2>
+                      <div className="flex items-center justify-between gap-3">
+                        {/* プロジェクト名 */}
+                        <h2
+                          className={`text-lg font-bold tracking-tight truncate ${
+                            p.completed
+                              ? "line-through text-slate-400"
+                              : "text-slate-900"
+                          }`}
+                        >
+                          {p.name}
+                        </h2>
+
+                        {/* 作業時間バッジ */}
+                        <span className="shrink-0 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200/60">
+                          ⏱️ {summary.find((s) => s.projectId === p.id)?.totalMinutes ?? 0} 分
+                        </span>
+                      </div>
 
                       {p.completed && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">

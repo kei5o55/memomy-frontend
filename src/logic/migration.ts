@@ -1,5 +1,6 @@
 // logic/migration.ts
 import { loadCommitsIdb, loadProjectsIdb } from "./storage-idb";
+import { readJson } from "./case";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -41,11 +42,12 @@ export async function migrateIdbToPostgres(): Promise<MigrationResult> {
 
         return {
           id: commit.id,
-          project_id: commit.projectId,
-          duration_ms: commit.durationMs,
-          ended_at: commit.endedAt,
+          projectId: commit.projectId,
+          durationMs: commit.durationMs,
+          // 💡 数値を ISO 8601 文字列に変換
+          endedAt: toIsoString(commit.endedAt),
           note: commit.note || null,
-          image_base64: imageBase64,
+          imageBase64,
         };
       })
     );
@@ -55,16 +57,12 @@ export async function migrateIdbToPostgres(): Promise<MigrationResult> {
         id: p.id,
         name: p.name,
         memo: p.memo || null,
-        pomodoro_work_minutes: p.pomodoroWorkMinutes ?? null,
-        pomodoro_break_minutes: p.pomodoroBreakMinutes ?? null,
+        pomodoroWorkMinutes: p.pomodoroWorkMinutes ?? null,
+        pomodoroBreakMinutes: p.pomodoroBreakMinutes ?? null,
         // 💡 数値を ISO 8601 文字列に変換
-        created_at: toIsoString(p.createdAt) || new Date().toISOString(),
+        createdAt: toIsoString(p.createdAt) || new Date().toISOString(),
         })),
-        commits: serializedCommits.map((c) => ({
-        ...c,
-        // 💡 ended_at も数値であれば ISO 文字列に変換
-        ended_at: toIsoString(c.ended_at),
-        })),
+        commits: serializedCommits,
     };
 
     const res = await fetch(`${BASE_URL}/api/v1/sync/import`, {
@@ -80,11 +78,11 @@ export async function migrateIdbToPostgres(): Promise<MigrationResult> {
       throw new Error(errData.message || `HTTP Error: ${res.status}`);
     }
 
-    const data = await res.json();
+    const data = await readJson<{ importedProjectsCount: number; importedCommitsCount: number }>(res);
     return {
       success: true,
-      importedProjectsCount: data.imported_projects_count,
-      importedCommitsCount: data.imported_commits_count,
+      importedProjectsCount: data.importedProjectsCount,
+      importedCommitsCount: data.importedCommitsCount,
     };
   } catch (err: unknown) {
     console.error("Migration failed:", err);

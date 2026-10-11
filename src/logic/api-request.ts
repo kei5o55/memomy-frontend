@@ -382,22 +382,23 @@ export const allProjectSummary = async (): Promise<Summary[]> => {
   }
 };
 
-export const projectSummary = async (id:string): Promise<Summary[]> => {
+/*単体projectのサマリ集計（これ使わない説)
+export const projectSummary = async (id:string): Promise<Summary | null> => {
   try{
     const response = await fetch(`${BASE_URL}/summary/project_id/${id}`);
     if(!response.ok){
       console.error(`httpエラー:${response.status}`);
     };
 
-    const rawData = await readJson<Summary[]>(response);
+    const rawData = await readJson<Summary>(response);
     console.log(`サマリ後のデータ:`,rawData);
 
     return rawData;
   }catch(error){
     console.log("エラー：",error);
-    return [];
+    return null;
   }
-}
+}*/
 
 //将来的に作る予定ユーザ別のサマリ（totalStatusCardの部分での表示情報を全てバックエンドで）
 /*export const userSummary = async ():Promise<UserSummary> =>{

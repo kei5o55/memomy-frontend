@@ -16,34 +16,9 @@ export type NewCalendarMemoInput= Omit<CalendarMemo,'id' | 'createdAt'>;
 export type NewUserProfile = Omit<User,`id`|`icon`|`ionBlob`|`bio`|`bgmUrl`|`snsUrl`|`badges`|`createdAt`|`updatedAt`>;
 
 
-export type ApiDayScheduleRes = {
-  id: string;
-  date: string; // YYYY-MM-DD
-  title: string;
-  start_hour: number; // 0~23
-  start_minute: number;
-  end_hour: number;
-  end_minute: number;
-}
-
-export type ApiProjectResponse = {
-  id: string;
-  name: string;
-  due_date: string | null;
+// API レスポンス（受け取り時に camelCase へ変換済み）のうち、フロントの型と値の形が異なるもの
+export type ApiProjectRes = Omit<Project, "dueDate" | "memo" | "createdAt"> & {
+  dueDate: string | null;
   memo: string | null;
-  created_at: string;
-  target_hours?: number;
-  pomodoro_work_minutes?: number;
-  pomodoro_break_minutes?: number;
-  completed: boolean;
+  createdAt: string; // ISO 8601
 };
-
-export type ApiCalendarMemosRes ={
-    id: string,
-    date: string,
-    text: string,
-    created_at: number
-}
-
-
-

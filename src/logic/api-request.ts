@@ -355,7 +355,7 @@ export const deleteCalendarMemo = async (id: string): Promise<boolean> => {
 };
 
 
-
+/*
 export const createUser = async(inputData: NewUserProfile):Promise<User | null> => {//初期登録時の
   try{
     const response =await fetch(`${BASE_URL}/user_profile`);
@@ -392,4 +392,4 @@ export const updateUserProfile = async (inputData:User): Promise<User | null>=>{
     console.error("API通信エラー:", error);
     return null;
   }
-}
+}*/

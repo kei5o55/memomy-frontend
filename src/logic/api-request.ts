@@ -377,6 +377,7 @@ export const projectSummary = async (): Promise<Summary[]> => {
     return rawData;
 
   }catch(error){
+    console.log("エラー：",error)
     return [];
   }
 }

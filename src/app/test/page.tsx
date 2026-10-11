@@ -8,7 +8,6 @@ import { loadProjects, projectSummary } from "@/logic/api-request";
 
 const user:User[]=localUser;
 
-const loadData =await projectSummary();
 
 export default function Page(){
     const [projects,setProjects] = useState<Project[]>([]);
@@ -31,7 +30,7 @@ export default function Page(){
         }
 
         fetchdata();
-    }, []);
+    }, [projects]);
 
     const log =()=>{
         console.log("projects:",projects);

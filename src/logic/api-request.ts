@@ -1,5 +1,5 @@
-import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput, NewUserProfile } from "./api-types";
-import type { Project, Commit, DaySchedule, CalendarMemo, User  } from "./types";
+import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput } from "./api-types";
+import type { Project, Commit, DaySchedule, CalendarMemo  } from "./types";
 import type { ApiProjectRes } from "./api-types";
 import { BASE_URL } from "./url";
 import { readJson } from "./case";

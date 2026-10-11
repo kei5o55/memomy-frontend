@@ -88,6 +88,13 @@ export const createCommit = async (inputData: NewCommitInput): Promise<Commit | 
 
     formData.append('commit[startedAt]', startedAtIso);
     formData.append('commit[endedAt]', endedAtIso);
+    // ⭕️ durationMs の計算 & 追加（inputData にあればそれを優先、無ければ差分から算出）
+    const durationMs = inputData.durationMs 
+      ? inputData.durationMs 
+      : new Date(inputData.endedAt).getTime() - new Date(inputData.startedAt).getTime();
+
+    // FormData は文字列にする必要があるため String() に変換
+    formData.append('commit[durationMs]', String(durationMs));
 
     if (inputData.note) {
       formData.append('commit[note]', inputData.note);

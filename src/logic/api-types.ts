@@ -7,7 +7,7 @@ export type NewProjectInput = Omit<Project,"id" | "createdAt" | "completed">
 //更新時はもとのtypesからインポートでおｋ（その場合、idもjsonから受け取ったものを適応してやる）
 
 
-export type NewCommitInput = Omit<Commit, 'id' | 'durationMs'>;
+export type NewCommitInput = Omit<Commit, 'id'>;
 
 export type NewDayScheduleInput= Omit<DaySchedule, 'id'>;
 

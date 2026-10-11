@@ -26,6 +26,8 @@ function formatMs(ms: number) {
   return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
 }
 
+
+
 export default function ProjectDetailPage({
   params,
 }: {
@@ -579,8 +581,8 @@ export default function ProjectDetailPage({
         {new Date(c.endedAt).toLocaleDateString()}
       </div>
     </div>
-  );
-})}
+    );
+  })}
           </div>
         )}
       </section>

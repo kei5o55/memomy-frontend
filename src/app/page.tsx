@@ -116,6 +116,7 @@ export default function ProjectsPage() {
       projectName: project.name,
       endedAt: now,
       startedAt: now - defaultMinutes * 60 * 1000,
+      durationMs:defaultMinutes * 60 * 1000 - now,
       note: "",
       commitNumber: projectCommits.length + 1,
       todayTotalMs: todayMs,
@@ -463,6 +464,7 @@ export default function ProjectsPage() {
                         }`}
                       >
                         {p.name}
+                        <span className="text-sm text-slate-400">ここにトータル作業時間を表示したい</span>
                       </h2>
 
                       {p.completed && (
@@ -644,6 +646,7 @@ export default function ProjectsPage() {
                 projectId: targetProjectId,
                 startedAt: draftCommit.startedAt,
                 endedAt: draftCommit.endedAt,
+                durationMs:draftCommit.endedAt - draftCommit.startedAt,
                 note: draftCommit.note,
                 image: draftCommit.image
                   ? {

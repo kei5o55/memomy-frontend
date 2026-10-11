@@ -366,7 +366,7 @@ export const deleteCalendarMemo = async (id: string): Promise<boolean> => {
 export const projectSummary = async (): Promise<Summary[]> => {
   try{ 
 
-    const response = await fetch(`${BASE_URL}/projects/summary`);
+    const response = await fetch(`${BASE_URL}/summary/project`);
     if(!response.ok){
       console.error(`httpエラー: ${response.status}`);
     };
@@ -380,7 +380,12 @@ export const projectSummary = async (): Promise<Summary[]> => {
     console.log("エラー：",error)
     return [];
   }
-}
+};
+
+//将来的に作る予定ユーザ別のサマリ（totalStatusCardの部分での表示情報を全てバックエンドで）
+/*export const userSummary = async ():Promise<UserSummary> =>{
+
+};*/
 
 /*
 export const createUser = async(inputData: NewUserProfile):Promise<User | null> => {//初期登録時の

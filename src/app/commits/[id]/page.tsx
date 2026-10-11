@@ -12,6 +12,7 @@ import {
 import {loadCommits,loadProjects,deleteCommit} from "../../../logic/api-request"
 import ConfirmModal from "../../../components/ConfirmModal";
 import type { Commit, Project } from "../../../logic/types";
+import ArtLightbox from "@/components/minor/ArtLightbox";
 
 import { HOST_URL } from "@/logic/url";
 
@@ -276,10 +277,9 @@ export default function CommitDetailPage({
           <div className="space-y-2 border-t border-slate-100 pt-4">
             <h2 className="text-sm font-bold text-slate-900">進捗画像</h2>
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-              <img
+              <ArtLightbox
                 src={imageUrl}
                 alt="Commit attachments"
-                className="w-full h-auto max-h-[500px] object-contain"
               />
             </div>
           </div>

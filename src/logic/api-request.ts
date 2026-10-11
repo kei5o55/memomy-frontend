@@ -1,13 +1,55 @@
-import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput, ApiCalendarMemosRes } from "./api-types";
+import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput } from "./api-types";
 import type { Project, Commit, DaySchedule, CalendarMemo  } from "./types";
-import type { ApiDayScheduleRes,ApiProjectResponse } from "./api-types";
+import type { ApiProjectRes } from "./api-types";
 import { BASE_URL } from "./url";
+import { readJson } from "./case";
 
 //const BASE_URL = 'http://localhost:3001/api/v1';
 
 
-//変数のケーシング（キャメルケース・スネークケース）が統一出来ていないので、ちゃんとRails側のコントローラ参照しつつやる
-//どっちかに統一したい
+// キーの命名規則：送信時はフロントの camelCase のまま送り（Rails 側で snake_case に変換）、
+// 受け取り時は readJson で snake_case → camelCase に変換する
+
+
+// ISO文字列 (または数値) の日時をミリ秒数値に揃える
+const toCommit = (item: Commit): Commit => {
+  const startedAtMs = typeof item.startedAt === 'number'
+    ? item.startedAt
+    : new Date(item.startedAt).getTime();
+
+  const endedAtMs = typeof item.endedAt === 'number'
+    ? item.endedAt
+    : new Date(item.endedAt).getTime();
+
+  // durationMs が null / NaN / undefined の場合は、ミリ秒の差分から自動計算
+  const computedDuration =
+    typeof item.durationMs === 'number' && !isNaN(item.durationMs)
+      ? item.durationMs
+      : endedAtMs - startedAtMs;
+
+  return {
+    ...item,
+    startedAt: startedAtMs,
+    endedAt: endedAtMs,
+    durationMs: computedDuration,
+    image: item.image ?? null,
+  };
+};
+
+const toProject = (item: ApiProjectRes): Project => ({
+  ...item,
+  dueDate: item.dueDate ?? undefined,
+  memo: item.memo ?? undefined,
+  createdAt: new Date(item.createdAt).getTime(),
+});
+
+type ApiError = { errors?: string[]; error?: string; message?: string };
+
+// エラーレスポンスからメッセージを組み立てる
+const toErrorMessage = (data: ApiError): string =>
+  Array.isArray(data.errors)
+    ? data.errors.join('\n')
+    : data.error || data.message || "予期せぬエラーが発生しました";
 
 
 // コミットを取得する API
@@ -20,36 +62,11 @@ export const loadCommits = async (): Promise<Commit[]> => {
       throw new Error(`HTTPエラー! status: ${response.status}`);
     }
 
-    const rawData:Commit[] = await response.json(); 
+    const rawData = await readJson<Commit[]>(response);
 
     console.log("送られたデータ : ", rawData);
 
-    const commits: Commit[] = rawData.map((item:Commit) => {//バックエンドでキャメルケースにパースして送ってる（Commitだけ）
-      // 1. ISO文字列 (または数数値) を Date オブジェクト経由でミリ秒数値に変換
-      const startedAtMs = typeof item.startedAt === 'number' 
-        ? item.startedAt 
-        : new Date(item.startedAt).getTime();
-
-      const endedAtMs = typeof item.endedAt === 'number' 
-        ? item.endedAt 
-        : new Date(item.endedAt).getTime();
-
-      // 2. durationMs が null / NaN / undefined の場合は、ミリ秒の差分から自動計算
-      const computedDuration = 
-        typeof item.durationMs === 'number' && !isNaN(item.durationMs)
-          ? item.durationMs
-          : endedAtMs - startedAtMs;
-
-      return {
-        id: item.id,
-        projectId: item.projectId,
-        startedAt: startedAtMs,
-        endedAt: endedAtMs,
-        durationMs: computedDuration,
-        note: item.note,
-        image: item.image ?? null,
-      };
-    });
+    const commits = rawData.map(toCommit);
 
     console.log("取得データ: ", commits);
 
@@ -64,13 +81,13 @@ export const createCommit = async (inputData: NewCommitInput): Promise<Commit | 
   try {
     const formData = new FormData();
 
-    formData.append('commit[project_id]', inputData.projectId);
+    formData.append('commit[projectId]', inputData.projectId);
     // ⭕️ 数値(ミリ秒)を ISO 8601 文字列 ("2026-09-09T10:00:00.000Z") に変換
     const startedAtIso = new Date(inputData.startedAt).toISOString();
     const endedAtIso = new Date(inputData.endedAt).toISOString();
 
-    formData.append('commit[started_at]', startedAtIso);
-    formData.append('commit[ended_at]', endedAtIso);
+    formData.append('commit[startedAt]', startedAtIso);
+    formData.append('commit[endedAt]', endedAtIso);
 
     if (inputData.note) {
       formData.append('commit[note]', inputData.note);
@@ -85,20 +102,19 @@ export const createCommit = async (inputData: NewCommitInput): Promise<Commit | 
       console.log(`${key}:`, value);
     }
 
-    // ⭕️ URL スラッシュを追加 (/projects/:id/commits)
     const response = await fetch(`${BASE_URL}/projects/${inputData.projectId}/commits`, {
       method: 'POST',
       body: formData,
     });
 
-    const data = await response.json();
+    const data = await readJson<Commit & ApiError>(response);
 
     if (!response.ok) {
       alert(`作成に失敗しました:\n${data.errors?.join('\n')}`);
       return null;
     }
 
-    return data;
+    return toCommit(data);
   } catch (error) {
     console.error('通信エラー:', error);
     return null;
@@ -132,21 +148,9 @@ export const loadProjects = async (): Promise<Project[]> => {
       throw new Error(`HTTPエラー! status: ${response.status}`);
     }
 
-    const rawData: ApiProjectResponse[] = await response.json();
+    const rawData = await readJson<ApiProjectRes[]>(response);
 
-    const projects: Project[] = rawData.map((item) => ({
-      id: item.id,
-      name: item.name,
-      dueDate: item.due_date ?? undefined,
-      memo: item.memo ?? undefined,
-      createdAt: new Date(item.created_at).getTime(),
-      targetHours: item.target_hours,
-      pomodoroWorkMinutes: item.pomodoro_work_minutes,
-      pomodoroBreakMinutes: item.pomodoro_break_minutes,
-      completed: item.completed,
-    }));
-
-    return projects;
+    return rawData.map(toProject);
   } catch (error) {
     console.error("エラー発生:", error);
     return [];
@@ -162,40 +166,18 @@ export const createProject = async (inputData: NewProjectInput): Promise<Project
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        project: {
-          name: inputData.name,
-          due_date: inputData.dueDate,
-          completed: false,
-          memo: inputData.memo,
-          target_hours: inputData.targetHours,
-          pomodoro_break_minutes: inputData.pomodoroBreakMinutes,
-          pomodoro_work_minutes: inputData.pomodoroWorkMinutes,
-        },
+        project: { ...inputData, completed: false },
       }),
     });
 
-    const data = await response.json();
+    const data = await readJson<ApiProjectRes & ApiError>(response);
 
     if (!response.ok) {
-      const errorMessage = Array.isArray(data.errors)
-        ? data.errors.join('\n')
-        : data.error || data.message || "予期せぬエラーが発生しました";
-
-      alert(`作成に失敗しました:\n${errorMessage}`);
+      alert(`作成に失敗しました:\n${toErrorMessage(data)}`);
       return null;
     }
 
-    return {
-      id: data.id,
-      name: data.name,
-      dueDate: data.due_date ?? undefined,
-      memo: data.memo ?? undefined,
-      createdAt: new Date(data.created_at).getTime(),
-      targetHours: data.target_hours,
-      pomodoroWorkMinutes: data.pomodoro_work_minutes,
-      pomodoroBreakMinutes: data.pomodoro_break_minutes,
-      completed: data.completed,
-    };
+    return toProject(data);
   } catch (error) {
     console.error('通信エラー:', error);
     alert('サーバーとの通信に失敗しました');
@@ -213,13 +195,12 @@ export const updateProject = async (inputData:Project): Promise<Project | null> 
       body: JSON.stringify({
         project: {
           name: inputData.name,
-          due_date: inputData.dueDate,
+          dueDate: inputData.dueDate,
           completed: inputData.completed ?? false,
           memo: inputData.memo,
-          target_hours: inputData.targetHours,
-          // Rails 側で秒(sec)または分(minutes)どちらで受け取るかに合わせてキー名を調整
-          pomodoro_work_minutes: inputData.pomodoroWorkMinutes,
-          pomodoro_break_minutes: inputData.pomodoroBreakMinutes,
+          targetHours: inputData.targetHours,
+          pomodoroWorkMinutes: inputData.pomodoroWorkMinutes,
+          pomodoroBreakMinutes: inputData.pomodoroBreakMinutes,
         },
       }),
     });
@@ -230,8 +211,7 @@ export const updateProject = async (inputData:Project): Promise<Project | null> 
     }
 
     // 💡 成功時はレスポンスの JSON データを返す
-    const updatedProject: Project = await response.json();
-    return updatedProject;
+    return toProject(await readJson<ApiProjectRes>(response));
   } catch (error) {
     console.error("Error in updateProject:", error);
     return null;
@@ -264,20 +244,7 @@ export const loadDaySchedules = async (): Promise<DaySchedule[]> => {
       throw new Error(`httpエラー status: ${response.status}`);
     }
 
-    const rawData :ApiDayScheduleRes[]=await response.json();
-
-    // ⭕️ item.start_hour (スネークケース) から受け取って TS 型に変換
-    const daySchedules: DaySchedule[] = rawData.map((item) => ({
-      id: item.id,
-      date: item.date,
-      title: item.title,
-      startHour: item.start_hour,
-      startMinute: item.start_minute,
-      endHour: item.end_hour,
-      endMinute: item.end_minute,
-    }));
-
-    return daySchedules;
+    return await readJson<DaySchedule[]>(response);
   } catch (error) {
     console.error("error ： ", error);
     return [];
@@ -292,37 +259,18 @@ export const createDaySchedule = async (inputData: NewDayScheduleInput): Promise
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        day_schedule: {
-          date: inputData.date,
-          title: inputData.title,
-          start_hour: inputData.startHour,
-          start_minute: inputData.startMinute,
-          end_hour: inputData.endHour,
-          end_minute: inputData.endMinute
-        },
+        daySchedule: inputData,
       }),
     });
 
-    const data = await response.json();
+    const data = await readJson<DaySchedule & ApiError>(response);
 
     if (!response.ok) {
-      const errorMessage = Array.isArray(data.errors)
-        ? data.errors.join('\n')
-        : data.error || data.message || "予期せぬエラーが発生しました";
-
-      alert(`作成に失敗しました:\n${errorMessage}`);
+      alert(`作成に失敗しました:\n${toErrorMessage(data)}`);
       return null;
     }
 
-    return {
-      id: data.id,
-      date: data.date,
-      title: data.title,
-      startHour: data.start_hour,
-      startMinute: data.start_minute,
-      endHour: data.end_hour,
-      endMinute: data.end_minute
-    };
+    return data;
   } catch (error) {
     console.error("API通信エラー:", error);
     return null;
@@ -331,24 +279,14 @@ export const createDaySchedule = async (inputData: NewDayScheduleInput): Promise
 
 export const loadCalendarMemos = async (): Promise<CalendarMemo[]> => {
   try {
-    // ⭕️ URL の Calendar を小文字に修正
+    
     const response = await fetch(`${BASE_URL}/calendar_memos`);
     
     if (!response.ok) {
       throw new Error(`エラー: status: ${response.status}`);
     }
 
-    const rawData:ApiCalendarMemosRes[]= await response.json();
-
-    // ⭕️ item.created_at (スネークケース) から受け取る
-    const calendarMemos: CalendarMemo[] = rawData.map((item:ApiCalendarMemosRes) => ({
-      id: item.id,
-      date: item.date,
-      text: item.text,
-      createdAt: item.created_at
-    }));
-
-    return calendarMemos;
+    return await readJson<CalendarMemo[]>(response);
   } catch (error) {
     console.error("error: ", error);
     return [];
@@ -375,35 +313,22 @@ export const deleteDaySchedule = async (id:string): Promise<boolean> =>{
 
 export const createCalendarMemo = async (inputData: NewCalendarMemoInput): Promise<CalendarMemo | null> => {
   try {
-    // ⭕️ URL に /calendar_memos を追加、キー名を calendar_memo に変更
     const response = await fetch(`${BASE_URL}/calendar_memos`, {
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        calendar_memo: {
-          text: inputData.text,
-          date: inputData.date,
-        },
+        calendarMemo: inputData,
       }),
     });
 
-    const data = await response.json();
+    const data = await readJson<CalendarMemo & ApiError>(response);
 
     if (!response.ok) {
-      const errorMessage = Array.isArray(data.errors)
-        ? data.errors.join('\n')
-        : data.error || data.message || "予期せぬエラーが発生しました";
-
-      alert(`作成に失敗しました:\n${errorMessage}`);
+      alert(`作成に失敗しました:\n${toErrorMessage(data)}`);
       return null;
     }
 
-    return {
-      id: data.id,
-      text: data.text,
-      date: data.date,
-      createdAt: data.created_at
-    };
+    return data;
 
   } catch (error) {
     console.error("API通信エラー:", error);
@@ -431,27 +356,40 @@ export const deleteCalendarMemo = async (id: string): Promise<boolean> => {
 
 
 /*
-export const createUser = async(inputData: NewUserProfile):Promise<User | null> => {
-
-}
-
-export const loadUserProfile = async ():Promise<User | null>=>{
+export const createUser = async(inputData: NewUserProfile):Promise<User | null> => {//初期登録時の
   try{
-    const response =await fetch(`${BASE_URL}/user`);
+    const response =await fetch(`${BASE_URL}/user_profile`);
 
     if(!response.ok){
-      console.log(`Userデータ取得エラー :status${response.status}`)
+      console.log(`Userデータ取得エラー :status${response.status}`);
     }
     return null;
   }catch(error){
+    console.error("API通信エラー:", error);
+    return null;
+  }
+}
+
+export const loadUserProfile = async ():Promise<User | null>=>{//ログイン成功時などの処理かも
+  try{
+    const response =await fetch(`${BASE_URL}/user_profile`);
+
+    if(!response.ok){
+      console.log(`Userデータ取得エラー :status${response.status}`);
+    }
+    return null;
+  }catch(error){
+    console.error("API通信エラー:", error);
     return null;//nullが帰ると上手く言ってないってコト
   }
 };
 
-export const updateUserProfile = async (inputData:User): Promise<User | null>=>{
+export const updateUserProfile = async (inputData:User): Promise<User | null>=>{//ユーザ情報更新のリクエスト
   try{
+    const response =await fetch(`${BASE_URL}/user_profile`);
     return null;
   }catch(error){
+    console.error("API通信エラー:", error);
     return null;
   }
 }*/

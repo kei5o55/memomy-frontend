@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { readJson } from '@/logic/case';
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email');
@@ -77,7 +78,7 @@ export const handleSignUp = async (formData: SignUpFormData) => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        password_confirmation: formData.passwordConfirmation,
+        passwordConfirmation: formData.passwordConfirmation,
       },
     }),
   });
@@ -110,7 +111,7 @@ export const fetchUserProfile = async () => {
   });
 
   if (response.ok) {
-    const user = await response.json();
+    const user = await readJson(response);
     return user;
   }
 };

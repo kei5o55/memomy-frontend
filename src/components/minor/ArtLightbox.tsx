@@ -26,7 +26,7 @@ export default function ArtLightbox({ src, alt }: { src: string; alt: string }) 
         <img
           src={src}
           alt={alt}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 opacity-90 group-hover:opacity-100"
+          className="w-full h-full object-cover transition-transform duration-200 opacity-90 group-hover:opacity-100"
         />
       </div>
 

@@ -4,7 +4,7 @@ import { useEffect,useState } from "react";
 import { localUser } from "../../logic/dummyDate"
 import type { Summary, User, Project } from "../../logic/types"
 import Link from "next/link"
-import { loadProjects, projectSummary } from "@/logic/api-request";
+import { loadProjects, allProjectSummary } from "@/logic/api-request";
 
 const user:User[]=localUser;
 
@@ -22,7 +22,7 @@ export default function Page(){
                 if(targetIds.length > 0){
                     console.log("data: ")
                 }
-                const fetchsummary = await projectSummary();
+                const fetchsummary = await allProjectSummary();
                 setSummary(fetchsummary);
             }catch(error){
                 console.log("取得失敗してるで",error)

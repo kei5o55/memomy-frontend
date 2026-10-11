@@ -7,6 +7,7 @@ import type { Project, Commit, WorkSession,Summary } from "../logic/types";
 import ConfirmModal from "../components/ConfirmModal";
 import CalendarBoard from "../components/calendar/CalendarBoard"
 import CommitModal, { type DraftCommit } from "../components/CommitModal"; 
+import ProjectCard from "../components/ProjectCard";
 import {
   loadProjectsIdb,
   saveProjectsIdb,
@@ -19,7 +20,7 @@ import { HOST_URL } from "@/logic/url";//http://localhost:3001 まで(api/v1と�
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
-import { loadProjects, createProject, loadCommits, createCommit, deleteProject, updateProject, projectSummary } from "../logic/api-request";
+import { loadProjects, createProject, loadCommits, createCommit, deleteProject, updateProject, allProjectSummary } from "../logic/api-request";
 
 import Link from "next/link";
 
@@ -75,7 +76,7 @@ export default function ProjectsPage() {
       isApiMode ? loadProjects() : loadProjectsIdb(),
       isApiMode ? loadCommits() : loadCommitsIdb(),
       loadSessionsIdb(), // Sessions はモードに関わらず常に IndexedDB から取得
-      projectSummary()
+      allProjectSummary()
       
     ]);
     console.log("nextSummary:",nextSummary);
@@ -415,6 +416,7 @@ export default function ProjectsPage() {
           </div>
         </div>
 
+        {/*projectカードリスト領域 */}
         {loading ? (
           <div className="flex items-center justify-center p-12 rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 text-slate-400 font-medium text-sm">
             データを読み込み中...
@@ -449,168 +451,20 @@ export default function ProjectsPage() {
               const isPaused = activeSession?.status === "paused";
 
               return (
-                <article
+                <ProjectCard
                   key={p.id}
-                  className={`group relative bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-4 ${
-                    p.completed
-                      ? "border-slate-200 bg-slate-50/60 opacity-80 hover:opacity-100"
-                      : "border-slate-200"
-                  }`}
-                >
-                  {/* Top Bar: Name, Status & Actions */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <div className="flex items-center justify-between gap-3">
-                        {/* プロジェクト名 */}
-                        <h2
-                          className={`text-lg font-bold tracking-tight truncate ${
-                            p.completed
-                              ? "line-through text-slate-400"
-                              : "text-slate-900"
-                          }`}
-                        >
-                          {p.name}
-                        </h2>
-
-                        {/* 作業時間バッジ */}
-                        <span className="shrink-0 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200/60">
-                          ⏱️ {summary.find((s) => s.projectId === p.id)?.totalMinutes ?? 0} 分
-                        </span>
-                      </div>
-
-                      {p.completed && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          ✓ 完了
-                        </span>
-                      )}
-
-                      {!p.completed && isRunning && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 animate-pulse">
-                          <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
-                          作業中
-                        </span>
-                      )}
-                      {!p.completed && isPaused && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                          一時停止中
-                        </span>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => onRequestDelete(p)}
-                      className="text-xs font-medium text-slate-400 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50 cursor-pointer ml-auto sm:ml-0"
-                      title="プロジェクトを削除"
-                    >
-                      削除
-                    </button>
-                  </div>
-
-                  {/* Details Meta */}
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                    {due ? (
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium text-slate-600">
-                          納期: {due}
-                        </span>
-                        {remain != null && !p.completed && (
-                          <span
-                            className={`font-semibold ${
-                              remain < 0
-                                ? "text-red-500"
-                                : remain <= 3
-                                ? "text-amber-600"
-                                : "text-sky-600"
-                            }`}
-                          >
-                            （{remain < 0 ? `${Math.abs(remain)}日超過` : `あと${remain}日`}）
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-slate-400">納期なし</span>
-                    )}
-
-                    <span className="text-slate-300">•</span>
-
-                    {p.pomodoroWorkMinutes && p.pomodoroBreakMinutes ? (
-                      <span>
-                        ポモドーロ: {p.pomodoroWorkMinutes}分 / 休憩 {p.pomodoroBreakMinutes}分
-                      </span>
-                    ) : (
-                      <span className="text-slate-400">ポモドーロ未設定</span>
-                    )}
-                  </div>
-
-                  {/* Main Content Area: Memo + Image */}
-                  <div className="flex flex-col sm:flex-row gap-4 items-start justify-between">
-                    <div className="flex-1 text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-                      {p.memo ? (
-                        p.memo
-                      ) : (
-                        <span className="text-slate-400 italic text-xs">
-                          （メモはありません）
-                        </span>
-                      )}
-                    </div>
-
-                    {imageUrl && (
-                      <div className="shrink-0 w-full sm:w-auto">
-                        <Link href={`/commits/${imageId}`}>
-                        <img
-                          
-                          src={imageUrl}
-                          alt="latest commit"
-                          className="h-28 sm:h-32 w-full sm:w-48 object-cover rounded-xl border border-slate-200 shadow-sm"
-                        /></Link>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Bottom Action Bar */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <div className="flex items-center gap-2.5">
-                      <Link
-                        href={`/project/${p.id}`}
-                        className="text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors"
-                      >
-                        詳細を見る
-                      </Link>
-                      {!p.completed && (
-                        <Link
-                          href={`/timer/${p.id}`}
-                          className="text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 px-4 py-2 rounded-lg shadow-sm transition-colors"
-                        >
-                          作業をはじめる
-                        </Link>
-                      )}
-                      {!p.completed && (
-                        <button
-                          onClick={() => handleOpenDirectCommit(p)}
-                          className="text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer"
-                        >
-                          ダイレクトコミット
-                        </button>
-                      )}
-                    </div>
-
-                    {/* 完了 / 戻す ボタン */}
-                    <button
-                      onClick={() => onToggleComplete(p)}
-                      className={`text-xs font-bold px-3.5 py-2 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
-                        p.completed
-                          ? "bg-slate-200 hover:bg-slate-300 text-slate-700"
-                          : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
-                      }`}
-                    >
-                      {p.completed ? (
-                        <>↩ 未完了に戻す</>
-                      ) : (
-                        <>✓ 完了にする</>
-                      )}
-                    </button>
-                  </div>
-                </article>
+                  project={p}
+                  summary={summary}
+                  due={due}
+                  remain={remain}
+                  imageUrl={imageUrl}
+                  imageId={imageId}
+                  isRunning={isRunning}
+                  isPaused={isPaused}
+                  onRequestDelete={onRequestDelete}
+                  onToggleComplete={onToggleComplete}
+                  handleOpenDirectCommit={handleOpenDirectCommit}
+                />
               );
             })}
           </div>

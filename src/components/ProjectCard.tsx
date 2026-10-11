@@ -16,7 +16,7 @@ type Props = {
 };
 
 export default function ProjectCard({
-  project: p,
+  project,
   summary,
   due,
   remain,
@@ -31,7 +31,7 @@ export default function ProjectCard({
   return (
     <article
       className={`group relative bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col gap-4 ${
-        p.completed
+        project.completed
           ? "border-slate-200 bg-slate-50/60 opacity-80 hover:opacity-100"
           : "border-slate-200"
       }`}
@@ -43,33 +43,33 @@ export default function ProjectCard({
             {/* プロジェクト名 */}
             <h2
               className={`text-lg font-bold tracking-tight truncate ${
-                p.completed
+                project.completed
                   ? "line-through text-slate-400"
                   : "text-slate-900"
               }`}
             >
-              {p.name}
+              {project.name}
             </h2>
 
             {/* 作業時間バッジ */}
             <span className="shrink-0 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200/60">
-              ⏱️ {summary.find((s) => s.projectId === p.id)?.totalMinutes ?? 0} 分
+              ⏱️ {summary.find((s) => s.projectId === project.id)?.totalMinutes ?? 0} 分
             </span>
           </div>
 
-          {p.completed && (
+          {project.completed && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               ✓ 完了
             </span>
           )}
 
-          {!p.completed && isRunning && (
+          {!project.completed && isRunning && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200 animate-pulse">
               <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
               作業中
             </span>
           )}
-          {!p.completed && isPaused && (
+          {!project.completed && isPaused && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
               一時停止中
             </span>
@@ -77,7 +77,7 @@ export default function ProjectCard({
         </div>
 
         <button
-          onClick={() => onRequestDelete(p)}
+          onClick={() => onRequestDelete(project)}
           className="text-xs font-medium text-slate-400 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50 cursor-pointer ml-auto sm:ml-0"
           title="プロジェクトを削除"
         >
@@ -92,7 +92,7 @@ export default function ProjectCard({
             <span className="font-medium text-slate-600">
               納期: {due}
             </span>
-            {remain != null && !p.completed && (
+            {remain != null && !project.completed && (
               <span
                 className={`font-semibold ${
                   remain < 0
@@ -112,9 +112,9 @@ export default function ProjectCard({
 
         <span className="text-slate-300">•</span>
 
-        {p.pomodoroWorkMinutes && p.pomodoroBreakMinutes ? (
+        {project.pomodoroWorkMinutes && project.pomodoroBreakMinutes ? (
           <span>
-            ポモドーロ: {p.pomodoroWorkMinutes}分 / 休憩 {p.pomodoroBreakMinutes}分
+            ポモドーロ: {project.pomodoroWorkMinutes}分 / 休憩 {project.pomodoroBreakMinutes}分
           </span>
         ) : (
           <span className="text-slate-400">ポモドーロ未設定</span>
@@ -124,8 +124,8 @@ export default function ProjectCard({
       {/* Main Content Area: Memo + Image */}
       <div className="flex flex-col sm:flex-row gap-4 items-start justify-between">
         <div className="flex-1 text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
-          {p.memo ? (
-            p.memo
+          {project.memo ? (
+            project.memo
           ) : (
             <span className="text-slate-400 italic text-xs">
               （メモはありません）
@@ -150,22 +150,22 @@ export default function ProjectCard({
       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
         <div className="flex items-center gap-2.5">
           <Link
-            href={`/project/${p.id}`}
+            href={`/project/${project.id}`}
             className="text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors"
           >
             詳細を見る
           </Link>
-          {!p.completed && (
+          {!project.completed && (
             <Link
-              href={`/timer/${p.id}`}
+              href={`/timer/${project.id}`}
               className="text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 px-4 py-2 rounded-lg shadow-sm transition-colors"
             >
               作業をはじめる
             </Link>
           )}
-          {!p.completed && (
+          {!project.completed && (
             <button
-              onClick={() => handleOpenDirectCommit(p)}
+              onClick={() => handleOpenDirectCommit(project)}
               className="text-xs font-bold text-white bg-sky-600 hover:bg-sky-700 px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer"
             >
               ダイレクトコミット
@@ -175,14 +175,14 @@ export default function ProjectCard({
 
         {/* 完了 / 戻す ボタン */}
         <button
-          onClick={() => onToggleComplete(p)}
+          onClick={() => onToggleComplete(project)}
           className={`text-xs font-bold px-3.5 py-2 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 ${
-            p.completed
+            project.completed
               ? "bg-slate-200 hover:bg-slate-300 text-slate-700"
               : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
           }`}
         >
-          {p.completed ? (
+          {project.completed ? (
             <>↩ 未完了に戻す</>
           ) : (
             <>✓ 完了にする</>

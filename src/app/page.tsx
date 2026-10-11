@@ -20,7 +20,7 @@ import { HOST_URL } from "@/logic/url";//http://localhost:3001 まで(api/v1と�
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
-import { loadProjects, createProject, loadCommits, createCommit, deleteProject, updateProject, projectSummary } from "../logic/api-request";
+import { loadProjects, createProject, loadCommits, createCommit, deleteProject, updateProject, allProjectSummary } from "../logic/api-request";
 
 import Link from "next/link";
 
@@ -76,7 +76,7 @@ export default function ProjectsPage() {
       isApiMode ? loadProjects() : loadProjectsIdb(),
       isApiMode ? loadCommits() : loadCommitsIdb(),
       loadSessionsIdb(), // Sessions はモードに関わらず常に IndexedDB から取得
-      projectSummary()
+      allProjectSummary()
       
     ]);
     console.log("nextSummary:",nextSummary);

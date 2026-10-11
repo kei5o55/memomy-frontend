@@ -19,7 +19,7 @@ import { HOST_URL } from "@/logic/url";//http://localhost:3001 まで(api/v1と�
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
-import { loadProjects, createProject, loadCommits, createCommit, deleteProject, updateProject } from "../logic/api-request";
+import { loadProjects, createProject, loadCommits, createCommit, deleteProject, updateProject, projectSummary } from "../logic/api-request";
 
 import Link from "next/link";
 
@@ -464,7 +464,7 @@ export default function ProjectsPage() {
                         }`}
                       >
                         {p.name}
-                        <span className="text-sm text-slate-400">ここにトータル作業時間を表示したい</span>
+                        <span className="text-sm text-slate-400">ここに総合時間を表示</span>
                       </h2>
 
                       {p.completed && (

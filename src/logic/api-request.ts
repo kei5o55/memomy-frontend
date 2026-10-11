@@ -1,5 +1,5 @@
 import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput } from "./api-types";
-import type { Project, Commit, DaySchedule, CalendarMemo  } from "./types";
+import type { Project, Commit, DaySchedule, CalendarMemo, Summary} from "./types";
 import type { ApiProjectRes } from "./api-types";
 import { BASE_URL } from "./url";
 import { readJson } from "./case";
@@ -360,6 +360,32 @@ export const deleteCalendarMemo = async (id: string): Promise<boolean> => {
     return false;
   }
 };
+
+export const projectSummary = async (id: string): Promise<Summary| null> => {
+  try{ 
+    const response = await fetch(`${BASE_URL}/projects/${id}/summary`);
+    console.log(`送られたデータ: `,response)
+    if(!response.ok){
+      console.error(`httpエラー: ${response.status}`);
+    };
+
+    
+
+    const rawData = await readJson<Summary>(response);
+    console.log(`パース後のデータ: `,rawData)
+    /*{将来的にprojectIdも入れて、該当idを表示みたいな
+        "total_duration_ms": 2103660,
+        "total_minutes": 35,
+        "session_count": 2,
+        "last_commit_at": "2026-10-11T09:01:08.000Z"
+    } */
+
+    return rawData;
+
+  }catch(error){
+    return null;
+  }
+}
 
 
 /*

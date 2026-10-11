@@ -114,4 +114,11 @@ export type CalendarCell = {
   schedules?: DaySchedule[];
 };
 
+export type Summary = {
+  totalDurationMs: number;
+  totalMinutes: number;
+  sessionCount: number;
+  lastCommitAt: Date;
+}
+
 

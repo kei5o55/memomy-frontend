@@ -26,7 +26,7 @@ const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
 // 初期ユーザーデータ
 export const initialUser: User = {
-  id: "usr_01HGB8Z9K1M3N4P5Q6R7S8T9U0",
+  id: 0,
   name: "test user",
   icon: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
   bio: "ReactとTypeScriptで個人開発中",
@@ -202,8 +202,8 @@ export default function UserProfilePage() {
           
           {/* SNSリンク遷移ボタンエリア */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              {user.snsUrls && user.snsUrls.length > 0 ? (
-                user.snsUrls.map((url, index) => (
+              {user.snsLinks && user.snsLinks.length > 0 ? (
+                user.snsLinks.map((url, index) => (
                   <a
                     key={index}
                     href={url}

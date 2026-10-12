@@ -40,7 +40,7 @@ export const MASTER_BADGES: Badge[] = [
 
 export const localUser: User[] = [
   {
-    id: "1",
+    id: 1,
     name: "InitialUser",
     icon:"",
     bio: "初期ユーザーだよぅ",
@@ -48,7 +48,7 @@ export const localUser: User[] = [
     createdAt: 1704067200000, // 2024-01-01T00:00:00.000Z
     updatedAt: 1709251200000, // 2024-03-01T00:00:00.000Z
   },{
-    id: "2",
+    id: 2,
     name: "テストユーザ２",
     icon:"https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
     bio: "なんふぇ？",
@@ -59,7 +59,7 @@ export const localUser: User[] = [
 ];
 
 export const initialuUser:User={
-    id: "1",
+    id: 0, // IDB のローカルユーザー（storage-idb の CURRENT_USER_KEY と同じ値）
     name: "InitialUser",
     icon:"",
     bio: "初期ユーザーだよぅ",

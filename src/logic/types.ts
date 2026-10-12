@@ -1,6 +1,10 @@
 // src/logic/types.ts
 
-
+export type Todo = {
+  id:number;
+  text: string;
+  completed: boolean;
+}
 
 export type IconImage = {//railsのアクティブストレージでurlを受け取ってアイコンにしたい
   width: number;
@@ -106,8 +110,8 @@ export type DaySchedule = {
 export type CalendarCell = {
   date: string; // "YYYY-MM-DD"
   isCurrentMonth: boolean;
-  isCurrendDay: boolean;
-  projects?: Project[]; // その日に進行中のプロジェクト
+  isCurrentDay: boolean;
+  projects: Project[]; // その日に進行中のプロジェクト（作成日〜納期当日）
   dueProjects: Project[]; // 納期がその日のプロジェクト
   memos: CalendarMemo[];
   commits: Commit[];

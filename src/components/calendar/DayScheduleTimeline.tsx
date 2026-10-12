@@ -27,6 +27,104 @@ function formatTimestamp(ms: number): string {
   return formatTime(d.getHours(), d.getMinutes());
 }
 
+// 1時間あたりの行の高さ(px)。予定・作業ログのバーの位置計算にも使う
+const ROW_HEIGHT = 44;
+// バーの最小の高さ(px)。短すぎて文字が読めなくなるのを防ぐ
+const MIN_BLOCK_HEIGHT = 18;
+const DAY_MINUTES = 24 * 60;
+// 行とバーのオーバーレイで共通のカラム構成（時刻 | 予定 | 作業ログ）
+const GRID_COLS = "grid grid-cols-[3rem_minmax(0,2fr)_minmax(0,3fr)] gap-3 px-2";
+
+function startOfDayMinutes(s: DaySchedule): number {
+  return s.startHour * 60 + s.startMinute;
+}
+
+function endOfDayMinutes(s: DaySchedule): number {
+  const end = s.endHour * 60 + s.endMinute;
+  // 終了が開始以前（不正データ）の場合は最低30分として扱う
+  return end > startOfDayMinutes(s) ? end : startOfDayMinutes(s) + 30;
+}
+
+function commitStartMinutes(c: Commit): number {
+  const d = new Date(c.startedAt);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function commitEndMinutes(c: Commit): number {
+  const start = new Date(c.startedAt);
+  const end = new Date(c.endedAt);
+  // 日付をまたいだ作業ログはその日の 24:00 で打ち切る
+  if (end.toDateString() !== start.toDateString()) return DAY_MINUTES;
+  return Math.max(end.getHours() * 60 + end.getMinutes(), commitStartMinutes(c) + 1);
+}
+
+type Block<T> = {
+  item: T;
+  top: number;
+  height: number;
+  col: number;
+  cols: number;
+};
+
+// 開始・終了（分）を持つ要素を時間軸上のバーに変換する。重なる要素は横に並べる
+function layoutBlocks<T>(
+  items: T[],
+  getStart: (item: T) => number,
+  getEnd: (item: T) => number
+): Block<T>[] {
+  // 最小の高さで描画したときの見た目上の終了時刻で重なりを判定する
+  const minMinutes = (MIN_BLOCK_HEIGHT / ROW_HEIGHT) * 60;
+  const ranges = items
+    .map((item) => {
+      const start = getStart(item);
+      const end = Math.min(getEnd(item), DAY_MINUTES);
+      return { item, start, end, visualEnd: Math.max(end, start + minMinutes) };
+    })
+    .sort((a, b) => a.start - b.start || b.end - a.end);
+
+  const blocks: Block<T>[] = [];
+  let cluster: Block<T>[] = [];
+  let colEnds: number[] = []; // 各列の最後の要素の終了時刻
+  let clusterEnd = -1;
+
+  const flush = () => {
+    cluster.forEach((b) => (b.cols = colEnds.length));
+    blocks.push(...cluster);
+    cluster = [];
+    colEnds = [];
+  };
+
+  for (const { item, start, end, visualEnd } of ranges) {
+    if (start >= clusterEnd) flush();
+
+    let col = colEnds.findIndex((e) => e <= start);
+    if (col === -1) col = colEnds.length;
+    colEnds[col] = visualEnd;
+    clusterEnd = Math.max(clusterEnd, visualEnd);
+
+    cluster.push({
+      item,
+      top: (start / 60) * ROW_HEIGHT,
+      height: Math.max(((end - start) / 60) * ROW_HEIGHT, MIN_BLOCK_HEIGHT),
+      col,
+      cols: 1,
+    });
+  }
+  flush();
+
+  return blocks;
+}
+
+// バーの横位置（重なり時は列ごとに分割）
+function blockStyle(block: Block<unknown>) {
+  return {
+    top: block.top + 1,
+    height: block.height - 2,
+    left: `calc(${(block.col / block.cols) * 100}% + 1px)`,
+    width: `calc(${100 / block.cols}% - 2px)`,
+  };
+}
+
 export default function DayScheduleTimeline({
   schedules,
   commits,
@@ -38,20 +136,20 @@ export default function DayScheduleTimeline({
   // 0時〜23時の24スロットを生成
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  
+  const scheduleBlocks = layoutBlocks(schedules, startOfDayMinutes, endOfDayMinutes);
+  const commitBlocks = layoutBlocks(commits, commitStartMinutes, commitEndMinutes);
 
   const slots: HourlySlot[] = hours.map((hour) => {
-    // その時間の予定（startHour 〜 endHour の間に含まれるか）
-    const slotSchedules = schedules.filter(
-      (s) => s.startHour <= hour && s.endHour >= hour
-    );
+    const slotStart = hour * 60;
+    const slotEnd = (hour + 1) * 60;
 
-    // その時間の作業ログ（startedAt 〜 endedAt の時間内にこの hour が含まれるか）
-    const slotCommits = commits.filter((c) => {
-      const startH = new Date(c.startedAt).getHours();
-      const endH = new Date(c.endedAt).getHours();
-      return startH <= hour && endH >= hour;
-    });
+    // その時間帯（hour:00 〜 hour+1:00）と重なる予定・作業ログ
+    const slotSchedules = schedules.filter(
+      (s) => startOfDayMinutes(s) < slotEnd && endOfDayMinutes(s) > slotStart
+    );
+    const slotCommits = commits.filter(
+      (c) => commitStartMinutes(c) < slotEnd && commitEndMinutes(c) > slotStart
+    );
 
     return {
       hour,
@@ -84,72 +182,89 @@ export default function DayScheduleTimeline({
       </div>
 
       {/* 24時間表示エリア */}
-      <div className="max-h-[480px] space-y-1 overflow-y-auto pr-1">
-        {slots.map((slot) => {
-          const hasContent = slot.schedules.length > 0 || slot.commits.length > 0;
-
-          return (
+      <div className="max-h-[480px] overflow-y-auto pr-1">
+        <div className="relative" style={{ height: ROW_HEIGHT * 24 }}>
+          {/* 1時間ごとの行（背景グリッド） */}
+          {slots.map((slot) => (
             <div
               key={slot.hour}
               onClick={() => setSelectedSlot(slot)}
-              className="group flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-2 py-1.5 transition hover:border-gray-200 hover:bg-white hover:shadow-xs"
+              className={`group ${GRID_COLS} cursor-pointer border-t border-gray-100 transition hover:bg-white`}
+              style={{ height: ROW_HEIGHT }}
             >
               {/* 時間 */}
-              <div className="w-12 shrink-0 font-mono text-xs font-medium text-gray-400 group-hover:text-indigo-600">
+              <div className="pt-0.5 font-mono text-xs font-medium text-gray-400 group-hover:text-indigo-600">
                 {slot.timeString}
               </div>
-
-              {/* 予定 & ログの簡易表示 */}
-              <div className="min-h-[24px] flex-1 flex flex-wrap items-center gap-1.5 text-xs">
-                {hasContent ? (
-                  <>
-                    {/* 予定（青・カラーバッジ） */}
-                    {slot.schedules.map((s) => (
-                      <span
-                        key={s.id}
-                        className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold text-white shadow-xs"
-                        style={{ backgroundColor: s.color || "#6366f1" }}
-                      >
-                        📅 {s.title}
-                        <span className="opacity-80 text-[10px]">
-                          ({formatTime(s.startHour, s.startMinute)}-{formatTime(s.endHour, s.endMinute)})
-                        </span>
-                      </span>
-                    ))}
-
-                    {/* 作業ログ（緑バッジ + 開始・終了時刻） */}
-                    {slot.commits.map((c) => {
-                      const proj = projects.find((p) => p.id === c.projectId);
-                      const startStr = formatTimestamp(c.startedAt);
-                      const endStr = formatTimestamp(c.endedAt);
-
-                      return (
-                        <span
-                          key={c.id}
-                          className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20"
-                        >
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                          {proj ? `[${proj.name}] ` : ""}
-                          <span className="truncate max-w-[120px]">{c.note || "作業ログ"}</span>
-                          <span className="opacity-75 text-[10px]">
-                            ({startStr}-{endStr})
-                          </span>
-                        </span>
-                      );
-                    })}
-                  </>
-                ) : (
-                  <span className="text-gray-300 opacity-0 group-hover:opacity-100 text-xs">—</span>
-                )}
-              </div>
             </div>
-          );
-        })}
+          ))}
+
+          {/* 予定・作業ログのバー（時間をまたいでも1本のラインとして表示） */}
+          <div className={`pointer-events-none absolute inset-0 ${GRID_COLS}`}>
+            <div />
+
+            {/* 予定 */}
+            <div className="relative">
+              {scheduleBlocks.map((block) => {
+                const s = block.item;
+                const timeLabel = `${formatTime(s.startHour, s.startMinute)}-${formatTime(s.endHour, s.endMinute)}`;
+
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => setSelectedSlot(slots[s.startHour])}
+                    title={`${s.title} (${timeLabel})`}
+                    className="pointer-events-auto absolute cursor-pointer overflow-hidden rounded-md px-2 py-0.5 text-[11px] font-semibold text-white shadow-xs transition hover:brightness-110"
+                    style={{ ...blockStyle(block), backgroundColor: s.color || "#6366f1" }}
+                  >
+                    <div className="truncate">📅 {s.title}</div>
+                    {block.height >= ROW_HEIGHT * 0.75 && (
+                      <div className="truncate text-[10px] font-normal opacity-80">{timeLabel}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 作業ログ */}
+            <div className="relative">
+              {commitBlocks.map((block) => {
+                const c = block.item;
+                const proj = projects.find((p) => p.id === c.projectId);
+                const label = `${proj ? `[${proj.name}] ` : ""}${c.note || "作業ログ"}`;
+                const timeLabel = `${formatTimestamp(c.startedAt)}-${formatTimestamp(c.endedAt)}`;
+
+                return (
+                  <div
+                    key={c.id}
+                    onClick={() => setSelectedSlot(slots[new Date(c.startedAt).getHours()])}
+                    title={`${label} (${timeLabel})`}
+                    className="pointer-events-auto absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] border-emerald-500 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20 transition hover:bg-emerald-100"
+                    style={blockStyle(block)}
+                  >
+                    <div className="truncate">{label}</div>
+                    {block.height >= ROW_HEIGHT * 0.75 && (
+                      <div className="truncate text-[10px] font-normal opacity-75">{timeLabel}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 詳細モーダル */}
       {selectedSlot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-xs">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-xs"
+          onMouseDown={(e) => {
+            // 背景クリックで閉じる
+            if (e.target === e.currentTarget) setSelectedSlot(null);
+          }}
+        >
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-base font-bold text-gray-900">

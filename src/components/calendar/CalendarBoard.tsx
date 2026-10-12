@@ -16,6 +16,7 @@ import type {
   Commit,
 } from "../../logic/types";
 import { loadProjects,loadCalendarMemos,loadCommits,createCalendarMemo,deleteCalendarMemo } from "../../logic/api-request";
+import { buildCalendarCells } from "../../logic/calendar";
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
@@ -68,6 +69,18 @@ export default function CalendarPage({
         setProjects(loadedProjects);
         setMemos(loadedMemos);
         setCommits(loadedCommits);
+
+        // 初期表示では今日のセルを選択しておく（ユーザーが既に選択していれば維持）
+        const today = new Date();
+        const todayCell =
+          buildCalendarCells(
+            today.getFullYear(),
+            today.getMonth(),
+            loadedProjects,
+            loadedMemos,
+            loadedCommits,
+          ).find((c) => c.isCurrentDay) ?? null;
+        setSelectedCell((prev) => prev ?? todayCell);
       } catch (error) {
         console.error("Failed to load initial data:", error);
       } finally {

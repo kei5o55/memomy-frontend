@@ -93,11 +93,7 @@ export default function ScheduleCalendar({
             const day = Number(cell.date.slice(-2));
             const isSelected = selectedDate === cell.date;
 
-            // プロパティ名の表記揺れ（isCurrendDay / isCurrentDay）の安全策
-            const isToday =
-              (cell as unknown as { isCurrentDay?: boolean }).isCurrentDay ??
-              cell.isCurrendDay ??
-              false;
+            const isToday = cell.isCurrentDay;
 
             return (
               <button

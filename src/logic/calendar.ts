@@ -7,10 +7,10 @@ function formatDate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-// 作成日〜納期前日の間にある日付なら進行中とみなす（納期当日は納期プロジェクト側で表示）。納期未設定のプロジェクトは対象外
+// 作成日〜納期（当日を含む）の間にある日付なら進行中とみなす。納期未設定のプロジェクトは対象外
 function isProjectInProgressOn(project: Project, date: string): boolean {
   if (!project.dueDate) return false;
-  return formatDate(new Date(project.createdAt)) <= date && date < project.dueDate;
+  return formatDate(new Date(project.createdAt)) <= date && date <= project.dueDate;
 }
 
 function isCommitOnDate(commit: Commit, date: string): boolean {

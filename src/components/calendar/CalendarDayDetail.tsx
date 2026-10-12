@@ -49,6 +49,10 @@ function calculateTotalMs(commits: Commit[]): number {
   return commits.reduce((acc, commit) => acc + (commit.durationMs || 0), 0);
 }
 
+function formatTime(h: number, m: number): string {
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
 function formatTotalTime(totalMs: number): string {
   if (totalMs <= 0) return "0分";
   const totalMinutes = Math.floor(totalMs / (1000 * 60));
@@ -176,6 +180,10 @@ export default function CalendarDayDetail({
 
   // 選択日（cell.date）に一致する予定をフィルタリング
   const daySchedules = schedules.filter((s) => s.date === cell.date);
+  // 予定リスト表示用（開始時刻順）
+  const sortedDaySchedules = [...daySchedules].sort(
+    (a, b) => a.startHour * 60 + a.startMinute - (b.startHour * 60 + b.startMinute)
+  );
 
   return (
     <div className="mt-6 space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -215,25 +223,6 @@ export default function CalendarDayDetail({
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* 左カラム: サマリー情報 */}
         <div className="space-y-6">
-          {/* 納期プロジェクト */}
-          <div>
-            <h4 className="mb-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-rose-600">
-              <span className="h-2 w-2 rounded-full bg-rose-500"></span>
-              納期プロジェクト
-            </h4>
-            {cell.dueProjects.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50/50 p-3 text-xs text-gray-400">納期予定はありません</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {cell.dueProjects.map((project) => (
-                  <span key={project.id} className="inline-flex items-center gap-1.5 rounded-md bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/10">
-                    {project.name}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
           {/* 進行中プロジェクト */}
           <div>
             <h4 className="mb-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600">
@@ -244,17 +233,72 @@ export default function CalendarDayDetail({
               <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50/50 p-3 text-xs text-gray-400">進行中のプロジェクトはありません</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {cell.projects.map((project) => (
-                  <Link
-                    key={project.id}
-                    href={`/project/${project.id}`}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10 transition hover:bg-indigo-100"
-                  >
-                    {project.name}
-                    <span className="text-[10px] font-normal text-indigo-500">納期 {project.dueDate}</span>
-                  </Link>
-                ))}
+                {cell.projects.map((project) => {
+                  // 納期当日のプロジェクトは赤色で強調表示
+                  const isDueToday = project.dueDate === cell.date;
+
+                  return (
+                    <Link
+                      key={project.id}
+                      href={`/project/${project.id}`}
+                      className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset transition ${
+                        isDueToday
+                          ? "bg-rose-50 text-rose-700 ring-rose-600/30 hover:bg-rose-100"
+                          : "bg-indigo-50 text-indigo-700 ring-indigo-700/10 hover:bg-indigo-100"
+                      }`}
+                    >
+                      {project.name}
+                      {isDueToday ? (
+                        <span className="rounded bg-rose-600 px-1.5 py-px text-[10px] font-bold text-white">本日</span>
+                      ) : (
+                        <span className="text-[10px] font-normal text-indigo-500">納期 {project.dueDate}</span>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
+            )}
+          </div>
+
+          {/* 予定 */}
+          <div>
+            <h4 className="mb-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-violet-600">
+              <span className="h-2 w-2 rounded-full bg-violet-500"></span>
+              予定
+            </h4>
+            {sortedDaySchedules.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50/50 p-3 text-xs text-gray-400">予定はありません</p>
+            ) : (
+              <ul className="space-y-2">
+                {sortedDaySchedules.map((s) => {
+                  const proj = projects.find((p) => p.id === s.projectId);
+
+                  return (
+                    <li key={s.id} className="group flex items-center gap-2.5 rounded-lg border border-gray-100 bg-gray-50/50 p-3 text-xs transition hover:bg-gray-50">
+                      <span className="h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: s.color || "#6366f1" }}></span>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-semibold text-gray-800">{s.title}</div>
+                        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500">
+                          <span className="font-mono">
+                            {formatTime(s.startHour, s.startMinute)} 〜 {formatTime(s.endHour, s.endMinute)}
+                          </span>
+                          {proj && <span className="truncate">[{proj.name}]</span>}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSchedule(s.id)}
+                        className="shrink-0 rounded p-1 text-gray-400 opacity-80 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
+                        title="予定を削除"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
 

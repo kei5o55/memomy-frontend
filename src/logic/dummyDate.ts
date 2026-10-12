@@ -1,5 +1,11 @@
 // ダミーデータ例
-import { Badge,User } from "./types";
+import { Badge,User,Todo } from "./types";
+
+export const dummyTodos:Todo[] = [
+    { id: 1, text: "やること１",completed:false },
+    { id: 2, text: "やること２",completed:false },
+    { id: 3, text: "やること3",completed:false },
+  ];
 
 export const MASTER_BADGES: Badge[] = [
   {

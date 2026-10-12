@@ -1,20 +1,14 @@
-type Todo = {
-  id: string;
-  text: string;
-  completed?: boolean;
-};
+import { dummyTodos } from "@/logic/dummyDate";
+import { Todo } from "@/logic/types";
 
 type CustomTodoProps = {
   todos?: Todo[];
   showCheckbox?: boolean;
 };
 
+const todos = dummyTodos;
+
 export default function CustomTodo({
-  todos = [
-    { id: "1", text: "やること１" },
-    { id: "2", text: "やること２" },
-    { id: "3", text: "やること２" },
-  ],
   showCheckbox = true,
 }: CustomTodoProps) {
   return (

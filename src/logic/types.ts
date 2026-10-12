@@ -1,6 +1,10 @@
 // src/logic/types.ts
 
-
+export type Todo = {
+  id:number;
+  text: string;
+  completed: boolean;
+}
 
 export type IconImage = {//railsのアクティブストレージでurlを受け取ってアイコンにしたい
   width: number;

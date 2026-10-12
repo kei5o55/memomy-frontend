@@ -48,7 +48,7 @@ export function buildCalendarCells(
     cells.push({
       date,
       isCurrentMonth: current.getMonth() === month,
-      isCurrendDay: date === formatDate(new Date()),
+      isCurrentDay: date === formatDate(new Date()),
       dueProjects,
       memos: dayMemos,
       commits: dayCommits,

@@ -79,7 +79,7 @@ export default function CalendarPage({
             loadedProjects,
             loadedMemos,
             loadedCommits,
-          ).find((c) => c.isCurrendDay) ?? null;
+          ).find((c) => c.isCurrentDay) ?? null;
         setSelectedCell((prev) => prev ?? todayCell);
       } catch (error) {
         console.error("Failed to load initial data:", error);

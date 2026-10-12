@@ -106,7 +106,7 @@ export type DaySchedule = {
 export type CalendarCell = {
   date: string; // "YYYY-MM-DD"
   isCurrentMonth: boolean;
-  isCurrendDay: boolean;
+  isCurrentDay: boolean;
   projects?: Project[]; // その日に進行中のプロジェクト
   dueProjects: Project[]; // 納期がその日のプロジェクト
   memos: CalendarMemo[];

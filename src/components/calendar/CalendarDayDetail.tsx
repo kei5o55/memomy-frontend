@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { loadDaySchedulesIdb, addDayScheduleIdb, deleteDayScheduleIdb } from "../../logic/storage-idb";
 import { loadDaySchedules,createDaySchedule,deleteDaySchedule } from "../../logic/api-request";
-import CustomTodo from "../CustomTodo";
+import CustomTodo from "./CustomTodo";
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 

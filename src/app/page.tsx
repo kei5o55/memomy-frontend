@@ -76,8 +76,8 @@ export default function ProjectsPage() {
       isApiMode ? loadProjects() : loadProjectsIdb(),
       isApiMode ? loadCommits() : loadCommitsIdb(),
       loadSessionsIdb(), // Sessions はモードに関わらず常に IndexedDB から取得
-      allProjectSummary()
-      
+      // サマリは API のみ提供。ローカルモードでは存在しない API を待たないようスキップする
+      isApiMode ? allProjectSummary() : Promise.resolve<Summary[]>([]),
     ]);
     console.log("nextSummary:",nextSummary);
     setProjects(nextProjects);//一つでもなにかおかしい事あったら再リロードみたいにしてもいいかもしれ
@@ -89,8 +89,14 @@ export default function ProjectsPage() {
   useEffect(() => {
     void (async () => {
       setLoading(true);
-      await refresh();
-      setLoading(false);
+      try {
+        await refresh();
+      } catch (error) {
+        console.error("Failed to load initial data:", error);
+      } finally {
+        // 読み込みに失敗してもローディング表示のまま止まらないようにする
+        setLoading(false);
+      }
     })();
   }, []);
 

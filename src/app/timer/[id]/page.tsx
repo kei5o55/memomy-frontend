@@ -362,7 +362,16 @@ export default function TimerPage({
 
     const durationMs = effectiveEnd - activeSession.startedAt;
 
-    const allCommits = await loadCommitsIdb();
+    // 累計計算用に最新の作業ログを保存先（API / IndexedDB）から取得し直す
+    // （「保存して続ける」で追加した分も含めるため。失敗時は手元の state を使う）
+    let allCommits = commits;
+    try {
+      allCommits = await (isApiMode ? loadCommits() : loadCommitsIdb());
+      setCommits(allCommits);
+    } catch (error) {
+      console.error("Failed to load commits:", error);
+    }
+
     const projectCommits = allCommits
       .filter((c) => c.projectId === selectedProject.id)
       .sort((a, b) => b.endedAt - a.endedAt);
@@ -379,7 +388,6 @@ export default function TimerPage({
       .map((c) => (c.note ?? "").trim())
       .filter((n) => n.length > 0)
       .slice(0, 5);
-
     const draft: DraftCommit = {
       projectId: selectedProject.id,
       projectName: selectedProject.name,
@@ -392,7 +400,8 @@ export default function TimerPage({
       recentNotes,
       image: null,
     };
-
+    console.log("today:",todayTotalMs);
+    console.log("total: ",projectTotalMs)
     setDraftCommit(draft);
     setIsCommitOpen(true);
   };

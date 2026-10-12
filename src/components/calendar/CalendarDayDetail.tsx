@@ -1,9 +1,10 @@
 import type { CalendarCell, Project, Commit, DaySchedule } from "../../logic/types";
 import DayScheduleTimeline from "./DayScheduleTimeline";
-import CreateScheduleModal from "../CreateScheduleModal";
+import CreateScheduleModal from "./CreateScheduleModal";
 import { useState, useEffect } from "react";
 import { loadDaySchedulesIdb, addDayScheduleIdb, deleteDayScheduleIdb } from "../../logic/storage-idb";
 import { loadDaySchedules,createDaySchedule,deleteDaySchedule } from "../../logic/api-request";
+import CustomTodo from "../CustomTodo";
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
@@ -308,6 +309,7 @@ export default function CalendarDayDetail({
               </div>
             )}
           </div>
+          <CustomTodo></CustomTodo>
         </div>
 
         {/* 右カラム: タイムスケジュール */}

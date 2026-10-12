@@ -27,6 +27,70 @@ function formatTimestamp(ms: number): string {
   return formatTime(d.getHours(), d.getMinutes());
 }
 
+// 1時間あたりの行の高さ(px)。予定バーの位置計算にも使う
+const ROW_HEIGHT = 44;
+// 行と予定バーで共通のカラム構成（時刻 | 予定 | 作業ログ）
+const GRID_COLS = "grid grid-cols-[3rem_minmax(0,2fr)_minmax(0,3fr)] gap-3 px-2";
+
+function startOfDayMinutes(s: DaySchedule): number {
+  return s.startHour * 60 + s.startMinute;
+}
+
+function endOfDayMinutes(s: DaySchedule): number {
+  const end = s.endHour * 60 + s.endMinute;
+  // 終了が開始以前（不正データ）の場合は最低30分として扱う
+  return end > startOfDayMinutes(s) ? end : startOfDayMinutes(s) + 30;
+}
+
+type ScheduleBlock = {
+  schedule: DaySchedule;
+  top: number;
+  height: number;
+  col: number;
+  cols: number;
+};
+
+// 予定を時間軸上のバーに変換する。重なる予定は横に並べる
+function layoutSchedules(schedules: DaySchedule[]): ScheduleBlock[] {
+  const sorted = [...schedules].sort(
+    (a, b) => startOfDayMinutes(a) - startOfDayMinutes(b) || endOfDayMinutes(b) - endOfDayMinutes(a)
+  );
+
+  const blocks: ScheduleBlock[] = [];
+  let cluster: ScheduleBlock[] = [];
+  let colEnds: number[] = []; // 各列の最後の予定の終了時刻
+  let clusterEnd = -1;
+
+  const flush = () => {
+    cluster.forEach((b) => (b.cols = colEnds.length));
+    blocks.push(...cluster);
+    cluster = [];
+    colEnds = [];
+  };
+
+  for (const s of sorted) {
+    const start = startOfDayMinutes(s);
+    const end = Math.min(endOfDayMinutes(s), 24 * 60);
+    if (start >= clusterEnd) flush();
+
+    let col = colEnds.findIndex((e) => e <= start);
+    if (col === -1) col = colEnds.length;
+    colEnds[col] = end;
+    clusterEnd = Math.max(clusterEnd, end);
+
+    cluster.push({
+      schedule: s,
+      top: (start / 60) * ROW_HEIGHT,
+      height: Math.max(((end - start) / 60) * ROW_HEIGHT, 18),
+      col,
+      cols: 1,
+    });
+  }
+  flush();
+
+  return blocks;
+}
+
 export default function DayScheduleTimeline({
   schedules,
   commits,
@@ -38,12 +102,12 @@ export default function DayScheduleTimeline({
   // 0時〜23時の24スロットを生成
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  
+  const scheduleBlocks = layoutSchedules(schedules);
 
   const slots: HourlySlot[] = hours.map((hour) => {
-    // その時間の予定（startHour 〜 endHour の間に含まれるか）
+    // その時間帯（hour:00 〜 hour+1:00）と重なる予定
     const slotSchedules = schedules.filter(
-      (s) => s.startHour <= hour && s.endHour >= hour
+      (s) => startOfDayMinutes(s) < (hour + 1) * 60 && endOfDayMinutes(s) > hour * 60
     );
 
     // その時間の作業ログ（startedAt 〜 endedAt の時間内にこの hour が含まれるか）
@@ -84,67 +148,96 @@ export default function DayScheduleTimeline({
       </div>
 
       {/* 24時間表示エリア */}
-      <div className="max-h-[480px] space-y-1 overflow-y-auto pr-1">
-        {slots.map((slot) => {
-          const hasContent = slot.schedules.length > 0 || slot.commits.length > 0;
+      <div className="max-h-[480px] overflow-y-auto pr-1">
+        <div className="relative" style={{ height: ROW_HEIGHT * 24 }}>
+          {/* 1時間ごとの行（背景グリッド + 作業ログ） */}
+          {slots.map((slot) => {
+            const visibleCommits = slot.commits.slice(0, 2);
+            const hiddenCount = slot.commits.length - visibleCommits.length;
 
-          return (
-            <div
-              key={slot.hour}
-              onClick={() => setSelectedSlot(slot)}
-              className="group flex cursor-pointer items-center gap-3 rounded-lg border border-transparent px-2 py-1.5 transition hover:border-gray-200 hover:bg-white hover:shadow-xs"
-            >
-              {/* 時間 */}
-              <div className="w-12 shrink-0 font-mono text-xs font-medium text-gray-400 group-hover:text-indigo-600">
-                {slot.timeString}
-              </div>
+            return (
+              <div
+                key={slot.hour}
+                onClick={() => setSelectedSlot(slot)}
+                className={`group ${GRID_COLS} cursor-pointer items-center border-t border-gray-100 transition hover:bg-white`}
+                style={{ height: ROW_HEIGHT }}
+              >
+                {/* 時間 */}
+                <div className="self-start pt-0.5 font-mono text-xs font-medium text-gray-400 group-hover:text-indigo-600">
+                  {slot.timeString}
+                </div>
 
-              {/* 予定 & ログの簡易表示 */}
-              <div className="min-h-[24px] flex-1 flex flex-wrap items-center gap-1.5 text-xs">
-                {hasContent ? (
-                  <>
-                    {/* 予定（青・カラーバッジ） */}
-                    {slot.schedules.map((s) => (
-                      <span
-                        key={s.id}
-                        className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold text-white shadow-xs"
-                        style={{ backgroundColor: s.color || "#6366f1" }}
-                      >
-                        📅 {s.title}
-                        <span className="opacity-80 text-[10px]">
-                          ({formatTime(s.startHour, s.startMinute)}-{formatTime(s.endHour, s.endMinute)})
-                        </span>
-                      </span>
-                    ))}
+                {/* 予定バーは下のオーバーレイで描画するため空けておく */}
+                <div />
 
-                    {/* 作業ログ（緑バッジ + 開始・終了時刻） */}
-                    {slot.commits.map((c) => {
-                      const proj = projects.find((p) => p.id === c.projectId);
-                      const startStr = formatTimestamp(c.startedAt);
-                      const endStr = formatTimestamp(c.endedAt);
+                {/* 作業ログ（緑バッジ + 開始・終了時刻） */}
+                <div className="flex min-w-0 items-center gap-1.5 overflow-hidden text-xs">
+                  {slot.commits.length > 0 ? (
+                    <>
+                      {visibleCommits.map((c) => {
+                        const proj = projects.find((p) => p.id === c.projectId);
+                        const startStr = formatTimestamp(c.startedAt);
+                        const endStr = formatTimestamp(c.endedAt);
 
-                      return (
-                        <span
-                          key={c.id}
-                          className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20"
-                        >
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                          {proj ? `[${proj.name}] ` : ""}
-                          <span className="truncate max-w-[120px]">{c.note || "作業ログ"}</span>
-                          <span className="opacity-75 text-[10px]">
-                            ({startStr}-{endStr})
+                        return (
+                          <span
+                            key={c.id}
+                            className="inline-flex min-w-0 shrink items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20"
+                          >
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500"></span>
+                            <span className="truncate">
+                              {proj ? `[${proj.name}] ` : ""}
+                              {c.note || "作業ログ"}
+                            </span>
+                            <span className="shrink-0 opacity-75 text-[10px]">
+                              ({startStr}-{endStr})
+                            </span>
                           </span>
-                        </span>
-                      );
-                    })}
-                  </>
-                ) : (
-                  <span className="text-gray-300 opacity-0 group-hover:opacity-100 text-xs">—</span>
-                )}
+                        );
+                      })}
+                      {hiddenCount > 0 && (
+                        <span className="shrink-0 text-[10px] text-emerald-700">+{hiddenCount}件</span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-300 opacity-0 group-hover:opacity-100 text-xs">—</span>
+                  )}
+                </div>
               </div>
+            );
+          })}
+
+          {/* 予定バー（時間をまたいでも1本のラインとして表示） */}
+          <div className={`pointer-events-none absolute inset-0 ${GRID_COLS}`}>
+            <div />
+            <div className="relative">
+              {scheduleBlocks.map(({ schedule: s, top, height, col, cols }) => {
+                const timeLabel = `${formatTime(s.startHour, s.startMinute)}-${formatTime(s.endHour, s.endMinute)}`;
+
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => setSelectedSlot(slots[s.startHour])}
+                    title={`${s.title} (${timeLabel})`}
+                    className="pointer-events-auto absolute cursor-pointer overflow-hidden rounded-md px-2 py-0.5 text-[11px] font-semibold text-white shadow-xs transition hover:brightness-110"
+                    style={{
+                      top: top + 1,
+                      height: height - 2,
+                      left: `calc(${(col / cols) * 100}% + 1px)`,
+                      width: `calc(${100 / cols}% - 2px)`,
+                      backgroundColor: s.color || "#6366f1",
+                    }}
+                  >
+                    <div className="truncate">📅 {s.title}</div>
+                    {height >= ROW_HEIGHT * 0.75 && (
+                      <div className="truncate text-[10px] font-normal opacity-80">{timeLabel}</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
+          </div>
+        </div>
       </div>
 
       {/* 詳細モーダル */}

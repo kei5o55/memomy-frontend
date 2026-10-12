@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { dummyTodos } from "@/logic/dummyDate";
 import { Todo } from "@/logic/types";
 
@@ -6,11 +7,22 @@ type CustomTodoProps = {
   showCheckbox?: boolean;
 };
 
-const todos = dummyTodos;
-
 export default function CustomTodo({
+  todos: initialTodos = dummyTodos,
   showCheckbox = true,
 }: CustomTodoProps) {
+  // todos を state として保持し、初期値に props（またはダミーデータ）を設定
+  const [todos, setTodos] = useState<Todo[]>(initialTodos);
+
+  // 指定した id の completed を反転（toggle）させる関数
+  function toggleComplete(id: number) {
+    setTodos((prevTodos) =>
+      prevTodos.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    );
+  }
+
   return (
     <div>
       <h4 className="mb-2.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-600">
@@ -30,8 +42,8 @@ export default function CustomTodo({
                 <input
                   type="checkbox"
                   checked={todo.completed ?? false}
-                  readOnly
-                  className="h-3.5 w-3.5 shrink-0 accent-sky-600"
+                  onChange={() => toggleComplete(todo.id)} // クリック時に状態を反転
+                  className="h-3.5 w-3.5 shrink-0 accent-sky-600 cursor-pointer"
                 />
               )}
 

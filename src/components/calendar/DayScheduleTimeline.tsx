@@ -242,7 +242,15 @@ export default function DayScheduleTimeline({
 
       {/* 詳細モーダル */}
       {selectedSlot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-xs">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4 backdrop-blur-xs"
+          onMouseDown={(e) => {
+            // 背景クリックで閉じる
+            if (e.target === e.currentTarget) setSelectedSlot(null);
+          }}
+        >
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-base font-bold text-gray-900">

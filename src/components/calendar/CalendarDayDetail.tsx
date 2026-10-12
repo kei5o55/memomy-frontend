@@ -319,15 +319,17 @@ export default function CalendarDayDetail({
         />
       </div>
 
-      {/* 予定追加モーダル */}
-      <CreateScheduleModal
-        open={isScheduleModalOpen}
-        defaultDate={cell.date}
-        projects={projects}
-        existingSchedules={schedules}
-        onClose={() => setIsScheduleModalOpen(false)}
-        onAdd={handleAddSchedule}
-      />
+      {/* 予定追加モーダル（開くたびにマウントし直し、選択中の日付で初期化する） */}
+      {isScheduleModalOpen && (
+        <CreateScheduleModal
+          open
+          defaultDate={cell.date}
+          projects={projects}
+          existingSchedules={schedules}
+          onClose={() => setIsScheduleModalOpen(false)}
+          onAdd={handleAddSchedule}
+        />
+      )}
     </div>
   );
 }

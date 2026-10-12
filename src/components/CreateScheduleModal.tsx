@@ -133,7 +133,18 @@ export default function CreateScheduleModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs"
+      onMouseDown={(e) => {
+        // 背景クリックで閉じる
+        if (e.target === e.currentTarget) {
+          setErrorMsg(null);
+          onClose();
+        }
+      }}
+    >
       <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-xl">
         <h3 className="text-lg font-bold text-gray-900">
           {mode === "schedule" ? "予定を追加" : "メモを追加"}

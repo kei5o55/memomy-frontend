@@ -2,6 +2,7 @@ import type { CalendarCell, Project, Commit, DaySchedule } from "../../logic/typ
 import DayScheduleTimeline from "./DayScheduleTimeline";
 import CreateScheduleModal from "./CreateScheduleModal";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { loadDaySchedulesIdb, addDayScheduleIdb, deleteDayScheduleIdb } from "../../logic/storage-idb";
 import { loadDaySchedules,createDaySchedule,deleteDaySchedule } from "../../logic/api-request";
 import CustomTodo from "../CustomTodo";
@@ -239,17 +240,22 @@ export default function CalendarDayDetail({
               <span className="h-2 w-2 rounded-full bg-indigo-500"></span>
               進行中プロジェクト
             </h4>
-            {/*{cell.projects.length === 0 ? (
+            {cell.projects.length === 0 ? (
               <p className="rounded-lg border border-dashed border-gray-200 bg-gray-50/50 p-3 text-xs text-gray-400">進行中のプロジェクトはありません</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {cell.projects.map((project) => (
-                  <span key={project.id} className="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
+                  <Link
+                    key={project.id}
+                    href={`/project/${project.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10 transition hover:bg-indigo-100"
+                  >
                     {project.name}
-                  </span>
+                    <span className="text-[10px] font-normal text-indigo-500">納期 {project.dueDate}</span>
+                  </Link>
                 ))}
               </div>
-            )}*/}
+            )}
           </div>
 
           {/* メモ */}

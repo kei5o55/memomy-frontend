@@ -7,13 +7,11 @@ function formatDate(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-/*function isDateInRange(target: string, start?: string, end?: string): boolean {
-  if (!start && !end) return false;
-  if (start && end) return target >= start && target <= end;
-  if (start) return target >= start;
-  if (end) return target <= end;
-  return false;
-}*/
+// 作成日〜納期前日の間にある日付なら進行中とみなす（納期当日は納期プロジェクト側で表示）。納期未設定のプロジェクトは対象外
+function isProjectInProgressOn(project: Project, date: string): boolean {
+  if (!project.dueDate) return false;
+  return formatDate(new Date(project.createdAt)) <= date && date < project.dueDate;
+}
 
 function isCommitOnDate(commit: Commit, date: string): boolean {
   return formatDate(new Date(commit.startedAt)) === date;
@@ -40,6 +38,7 @@ export function buildCalendarCells(
 
 
 
+    const inProgressProjects = projects.filter((p) => isProjectInProgressOn(p, date));
     const dueProjects = projects.filter((p) => p.dueDate === date);
 
     const dayMemos = memos.filter((m) => m.date === date);
@@ -49,6 +48,7 @@ export function buildCalendarCells(
       date,
       isCurrentMonth: current.getMonth() === month,
       isCurrentDay: date === formatDate(new Date()),
+      projects: inProgressProjects,
       dueProjects,
       memos: dayMemos,
       commits: dayCommits,

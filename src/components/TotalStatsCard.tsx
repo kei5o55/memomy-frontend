@@ -64,7 +64,7 @@ export default function TotalStatsCard({
       lastActiveDate,
       imageCommitsCount,
     };
-  }, [commits]);
+  }, [commits,projects]);
 
   if (loading) {
     return (

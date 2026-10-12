@@ -33,44 +33,31 @@ export default function UserProfileModal({
   // バッジ設定用のインナーモーダル表示フラグ
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
 
-  // 初期値：currentUser.snsUrls（なければ単一文字列からのフォールバック、または空配列）
-  const [snsUrls, setSnsUrls] = useState<string[]>(() => {
-    if (Array.isArray(currentUser?.snsUrls) && currentUser.snsUrls.length > 0) {
-      return currentUser.snsUrls;
-    }
-    if (
-      currentUser &&
-      "snsUrl" in currentUser &&
-      typeof (currentUser as { snsUrl?: unknown }).snsUrl === "string"
-    ) {
-      const oldSnsUrl = (currentUser as { snsUrl?: string }).snsUrl;
-      if (oldSnsUrl) {
-        return [oldSnsUrl];
-      }
-    }
-    return [""]; // 初期表示用に1つの空入力枠
-  });
+  // 初期値：currentUser.snsLinks（なければ初期表示用に1つの空入力枠）
+  const [snsLinks, setSnsLinks] = useState<string[]>(() =>
+    currentUser?.snsLinks?.length ? currentUser.snsLinks : [""]
+  );
 
   // 特定インデックスのURL変更
-  const handleSnsUrlChange = (index: number, value: string) => {
-    const updated = [...snsUrls];
+  const handleSnsLinkChange = (index: number, value: string) => {
+    const updated = [...snsLinks];
     updated[index] = value;
-    setSnsUrls(updated);
+    setSnsLinks(updated);
   };
 
   // 入力枠の追加（最大4つまで）
-  const handleAddSnsUrl = () => {
-    if (snsUrls.length < 4) {
-      setSnsUrls([...snsUrls, ""]);
+  const handleAddSnsLink = () => {
+    if (snsLinks.length < 4) {
+      setSnsLinks([...snsLinks, ""]);
     }
   };
 
   // 特定インデックスの枠を削除
-  const handleRemoveSnsUrl = (index: number) => {
-    if (snsUrls.length === 1) {
-      setSnsUrls([""]);
+  const handleRemoveSnsLink = (index: number) => {
+    if (snsLinks.length === 1) {
+      setSnsLinks([""]);
     } else {
-      setSnsUrls(snsUrls.filter((_, i) => i !== index));
+      setSnsLinks(snsLinks.filter((_, i) => i !== index));
     }
   };
 
@@ -125,7 +112,7 @@ export default function UserProfileModal({
         iconResult = await convertFileToBase64(iconFile);
       }
 
-      const cleanedSnsUrls = snsUrls
+      const cleanedSnsLinks = snsLinks
         .map((url) => url.trim())
         .filter((url) => url !== "");
 
@@ -136,7 +123,7 @@ export default function UserProfileModal({
         name: name,
         bio: bio,
         bgmUrl: bgmUrl,
-        snsUrls: cleanedSnsUrls,
+        snsLinks: cleanedSnsLinks,
         badges: selectedBadges, // 更新したバッジ配列を反映
         updatedAt: Date.now(),
       };
@@ -288,10 +275,10 @@ export default function UserProfileModal({
                 <label className="block text-sm font-medium text-slate-700">
                   SNSリンク <span className="text-xs font-normal text-slate-400">（最大4つ）</span>
                 </label>
-                {snsUrls.length < 4 && (
+                {snsLinks.length < 4 && (
                   <button
                     type="button"
-                    onClick={handleAddSnsUrl}
+                    onClick={handleAddSnsLink}
                     className="text-xs font-semibold text-sky-600 hover:text-sky-700 flex items-center gap-1 cursor-pointer"
                   >
                     ＋ リンクを追加
@@ -300,12 +287,12 @@ export default function UserProfileModal({
               </div>
 
               <div className="space-y-2">
-                {snsUrls.map((url, index) => (
+                {snsLinks.map((url, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <input
                       type="url"
                       value={url}
-                      onChange={(e) => handleSnsUrlChange(index, e.target.value)}
+                      onChange={(e) => handleSnsLinkChange(index, e.target.value)}
                       placeholder={
                         index === 0
                           ? "https://x.com/..."
@@ -315,10 +302,10 @@ export default function UserProfileModal({
                       }
                       className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition-all text-sm"
                     />
-                    {(snsUrls.length > 1 || url !== "") && (
+                    {(snsLinks.length > 1 || url !== "") && (
                       <button
                         type="button"
-                        onClick={() => handleRemoveSnsUrl(index)}
+                        onClick={() => handleRemoveSnsLink(index)}
                         className="p-2 text-slate-400 hover:text-rose-500 rounded-lg hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
                         title="削除"
                       >

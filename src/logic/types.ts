@@ -21,13 +21,13 @@ export type Badge = {
 };
 
 export type User = {
-  id: string;
+  id: number; // Rails の users.id (bigint) に合わせる。IDB のローカルユーザーは固定で 0
   name: string;
   icon?: string;
   iconBlob?: Blob | File;
   bio?: string;
   bgmUrl?: string; // 作業BGMリンク用
-  snsUrls?: string[];//SNSのリンク用（Twitter・個人サイトなど複数モテるように）
+  snsLinks?: string[];//SNSのリンク用（Twitter・個人サイトなど複数モテるように）
   badges?: Badge[];
   todo?: string[];//ユーザごとの作業todo(ラフ・線画みたいな)
   createdAt?: number;

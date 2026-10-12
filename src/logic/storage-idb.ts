@@ -3,7 +3,7 @@ import type { Project, WorkSession, Commit, CalendarMemo, DaySchedule, User} fro
 import {initialuUser} from "./dummyDate";
 
 export const IDB_NAME = "worklog-db";
-export const IDB_VERSION = 3; // userProfileストア追加のためバージョンアップ (2 -> 3)
+export const IDB_VERSION = 4; // userProfile の id を number・snsUrls を snsLinks に変更 (3 -> 4)
 
 export const STORE_NAMES = {
   projects: "projects",
@@ -14,8 +14,10 @@ export const STORE_NAMES = {
   userProfile: "userProfile", // 追加
 } as const;
 
-// ユーザープロフィールの固定キー
-export const CURRENT_USER_KEY = "current_user";
+// ユーザープロフィールの固定キー（User.id は number なのでローカルユーザーは 0 で固定）
+export const CURRENT_USER_KEY = 0;
+// IDB_VERSION 3 以前のユーザープロフィールのキー
+const LEGACY_CURRENT_USER_KEY = "current_user";
 
 interface WorklogDB extends DBSchema {
   projects: {
@@ -39,7 +41,7 @@ interface WorklogDB extends DBSchema {
     value: DaySchedule;
   };
   userProfile: { // 追加
-    key: string;
+    key: number;
     value: User;
   };
 }
@@ -105,21 +107,35 @@ function normalizeDaySchedule(s: DaySchedule): DaySchedule {
   };
 }
 
+// 旧形式のプロフィールに残っている可能性があるフィールド
+type LegacyUserProfile = Omit<User, "id"> & {
+  id: number | string;
+  snsUrls?: string[];
+  snsUrl?: string;
+};
+
 // ユーザープロフィールの正規化ヘルパー
-function normalizeUserProfile(user: User): User {
+// 旧形式（id: "current_user"、snsUrls / snsUrl）のデータも新形式に変換する
+function normalizeUserProfile(user: LegacyUserProfile): User {
+  const { snsUrls, snsUrl, ...rest } = user;
+  const snsLinks = (user.snsLinks ?? snsUrls ?? (snsUrl ? [snsUrl] : []))
+    .map((link) => link.trim())
+    .filter((link) => link !== "");
+
   return {
-    ...user,
-    id: user.id || CURRENT_USER_KEY,
+    ...rest,
+    id: typeof user.id === "number" ? user.id : CURRENT_USER_KEY,
     name: normalizeString(user.name) ?? "No Name",
     bio: normalizeString(user.bio),
     bgmUrl: normalizeString(user.bgmUrl),
+    snsLinks,
   };
 }
 
 export const dbPromise =
   typeof window !== "undefined"
     ? openDB<WorklogDB>(IDB_NAME, IDB_VERSION, {
-        upgrade(db) {
+        upgrade(db, oldVersion, _newVersion, tx) {
           if (!db.objectStoreNames.contains(STORE_NAMES.projects)) {
             db.createObjectStore(STORE_NAMES.projects, { keyPath: "id" });
           }
@@ -138,6 +154,17 @@ export const dbPromise =
           // 追加: userProfileストアの作成
           if (!db.objectStoreNames.contains(STORE_NAMES.userProfile)) {
             db.createObjectStore(STORE_NAMES.userProfile, { keyPath: "id" });
+          }
+          // 3 -> 4: "current_user" キーのプロフィールを number キー (0) に移し替える
+          if (oldVersion === 3) {
+            const store = tx.objectStore(STORE_NAMES.userProfile);
+            // 旧キーは string なので、型定義 (key: number) を外して取得・削除する
+            const legacyKey = LEGACY_CURRENT_USER_KEY as unknown as number;
+            void store.get(legacyKey).then(async (legacy) => {
+              if (!legacy) return;
+              await store.put(normalizeUserProfile({ ...legacy, id: CURRENT_USER_KEY }));
+              await store.delete(legacyKey);
+            });
           }
         },
       })

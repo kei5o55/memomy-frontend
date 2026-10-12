@@ -13,7 +13,7 @@ export type NewDayScheduleInput= Omit<DaySchedule, 'id'>;
 
 export type NewCalendarMemoInput= Omit<CalendarMemo,'id' | 'createdAt'>;
 
-export type NewUserProfile = Omit<User,`id`|`icon`|`ionBlob`|`bio`|`bgmUrl`|`snsUrl`|`badges`|`createdAt`|`updatedAt`>;
+export type NewUserProfile = Omit<User,`id`|`icon`|`iconBlob`|`bio`|`bgmUrl`|`snsLinks`|`badges`|`createdAt`|`updatedAt`>;
 
 
 // API レスポンス（受け取り時に camelCase へ変換済み）のうち、フロントの型と値の形が異なるもの

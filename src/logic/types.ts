@@ -29,7 +29,7 @@ export type User = {
   bgmUrl?: string; // 作業BGMリンク用
   snsLinks?: string[];//SNSのリンク用（Twitter・個人サイトなど複数モテるように）
   badges?: Badge[];
-  todo?: string[];//ユーザごとの作業todo(ラフ・線画みたいな)
+  //todo?: string[];//ユーザごとの作業todo(ラフ・線画みたいな)
   createdAt?: number;
   updatedAt?: number;
 };

@@ -1,8 +1,8 @@
 // logic/migration.ts
 import { loadCommitsIdb, loadProjectsIdb } from "./storage-idb";
 import { readJson } from "./case";
-
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { apiFetch } from "./auth";
+import { BASE_URL } from "./url";
 
 export interface MigrationResult {
   success: boolean;
@@ -65,7 +65,7 @@ export async function migrateIdbToPostgres(): Promise<MigrationResult> {
         commits: serializedCommits,
     };
 
-    const res = await fetch(`${BASE_URL}/api/v1/sync/import`, {
+    const res = await apiFetch(`${BASE_URL}/sync/import`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

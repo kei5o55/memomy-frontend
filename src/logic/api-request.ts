@@ -3,6 +3,7 @@ import type { Project, Commit, DaySchedule, CalendarMemo, Summary} from "./types
 import type { ApiProjectRes } from "./api-types";
 import { BASE_URL } from "./url";
 import { readJson } from "./case";
+import { apiFetch } from "./auth";
 
 //const BASE_URL = 'http://localhost:3001/api/v1';
 
@@ -10,6 +11,8 @@ import { readJson } from "./case";
 // キーの命名規則：送信時はフロントの camelCase のまま送り（Rails 側で snake_case に変換）、
 // 受け取り時は readJson で snake_case → camelCase に変換する
 
+//apifetch()内でトークンを検証し、未認証の場合は/loginへ遷移する処理
+//よって、page.tsxにおけるuseeffectなどで/loginへ遷移されるよ
 
 // ISO文字列 (または数値) の日時をミリ秒数値に揃える
 const toCommit = (item: Commit): Commit => {
@@ -56,7 +59,7 @@ const toErrorMessage = (data: ApiError): string =>
 export const loadCommits = async (): Promise<Commit[]> => {
   try {
     console.log(BASE_URL);
-    const response = await fetch(`${BASE_URL}/commits`);
+    const response = await apiFetch(`${BASE_URL}/commits`);
 
     if (!response.ok) {
       throw new Error(`HTTPエラー! status: ${response.status}`);
@@ -107,7 +110,7 @@ export const createCommit = async (inputData: NewCommitInput): Promise<Commit | 
       console.log(`${key}:`, value);
     }
 
-    const response = await fetch(`${BASE_URL}/projects/${inputData.projectId}/commits`, {
+    const response = await apiFetch(`${BASE_URL}/projects/${inputData.projectId}/commits`, {
       method: 'POST',
       body: formData,
     });
@@ -128,7 +131,7 @@ export const createCommit = async (inputData: NewCommitInput): Promise<Commit | 
 
 export const deleteCommit = async (id:string): Promise<boolean> =>{
     try {
-    const response = await fetch(`${BASE_URL}/commits/${id}`, {
+    const response = await apiFetch(`${BASE_URL}/commits/${id}`, {
       method: "DELETE", 
     });
 
@@ -147,7 +150,7 @@ export const deleteCommit = async (id:string): Promise<boolean> =>{
 // プロジェクトを取得する API 
 export const loadProjects = async (): Promise<Project[]> => {
   try {
-    const response = await fetch(`${BASE_URL}/projects`);
+    const response = await apiFetch(`${BASE_URL}/projects`);
     
     if (!response.ok) {
       throw new Error(`HTTPエラー! status: ${response.status}`);
@@ -168,7 +171,7 @@ export const loadProjects = async (): Promise<Project[]> => {
 // プロジェクトを新規作成する API
 export const createProject = async (inputData: NewProjectInput): Promise<Project | null> => {
   try {
-    const response = await fetch(`${BASE_URL}/projects`, {
+    const response = await apiFetch(`${BASE_URL}/projects`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -195,7 +198,7 @@ export const createProject = async (inputData: NewProjectInput): Promise<Project
 
 export const updateProject = async (inputData:Project): Promise<Project | null> =>{
   try{
-    const response = await fetch(`${BASE_URL}/projects/${inputData.id}`,{
+    const response = await apiFetch(`${BASE_URL}/projects/${inputData.id}`,{
       method:"PATCH",
       headers: {
         'Content-Type': 'application/json',
@@ -228,7 +231,7 @@ export const updateProject = async (inputData:Project): Promise<Project | null> 
 
 export const deleteProject = async (id:string): Promise<boolean> => {
     try {
-    const response = await fetch(`${BASE_URL}/projects/${id}`, {
+    const response = await apiFetch(`${BASE_URL}/projects/${id}`, {
       method: "DELETE", 
     });
 
@@ -246,7 +249,7 @@ export const deleteProject = async (id:string): Promise<boolean> => {
 
 export const loadDaySchedules = async (): Promise<DaySchedule[]> => {
   try {
-    const response = await fetch(`${BASE_URL}/day_schedules`);
+    const response = await apiFetch(`${BASE_URL}/day_schedules`);
 
     if (!response.ok) {
       throw new Error(`httpエラー status: ${response.status}`);
@@ -261,7 +264,7 @@ export const loadDaySchedules = async (): Promise<DaySchedule[]> => {
 
 export const createDaySchedule = async (inputData: NewDayScheduleInput): Promise<DaySchedule | null> => {
   try {
-    const response = await fetch(`${BASE_URL}/day_schedules`, {
+    const response = await apiFetch(`${BASE_URL}/day_schedules`, {
       method: `POST`,
       headers: {
         'Content-Type': 'application/json',
@@ -288,7 +291,7 @@ export const createDaySchedule = async (inputData: NewDayScheduleInput): Promise
 export const loadCalendarMemos = async (): Promise<CalendarMemo[]> => {
   try {
     
-    const response = await fetch(`${BASE_URL}/calendar_memos`);
+    const response = await apiFetch(`${BASE_URL}/calendar_memos`);
     
     if (!response.ok) {
       throw new Error(`エラー: status: ${response.status}`);
@@ -303,7 +306,7 @@ export const loadCalendarMemos = async (): Promise<CalendarMemo[]> => {
 
 export const deleteDaySchedule = async (id:string): Promise<boolean> =>{
   try{
-    const response = await fetch(`${BASE_URL}/day_schedules/${id}`,{
+    const response = await apiFetch(`${BASE_URL}/day_schedules/${id}`,{
       method: "DELETE",
     });
 
@@ -321,7 +324,7 @@ export const deleteDaySchedule = async (id:string): Promise<boolean> =>{
 
 export const createCalendarMemo = async (inputData: NewCalendarMemoInput): Promise<CalendarMemo | null> => {
   try {
-    const response = await fetch(`${BASE_URL}/calendar_memos`, {
+    const response = await apiFetch(`${BASE_URL}/calendar_memos`, {
       method: "POST",
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -346,7 +349,7 @@ export const createCalendarMemo = async (inputData: NewCalendarMemoInput): Promi
 
 export const deleteCalendarMemo = async (id: string): Promise<boolean> => {
   try {
-    const response = await fetch(`${BASE_URL}/calendar_memos/${id}`, {
+    const response = await apiFetch(`${BASE_URL}/calendar_memos/${id}`, {
       method: "DELETE", 
     });
 
@@ -366,7 +369,7 @@ export const deleteCalendarMemo = async (id: string): Promise<boolean> => {
 export const allProjectSummary = async (): Promise<Summary[]> => {
   try{ 
 
-    const response = await fetch(`${BASE_URL}/summary/project`);
+    const response = await apiFetch(`${BASE_URL}/summary/project`);
     if(!response.ok){
       console.error(`httpエラー: ${response.status}`);
     };
@@ -385,7 +388,7 @@ export const allProjectSummary = async (): Promise<Summary[]> => {
 /*単体projectのサマリ集計（これ使わない説)
 export const projectSummary = async (id:string): Promise<Summary | null> => {
   try{
-    const response = await fetch(`${BASE_URL}/summary/project_id/${id}`);
+    const response = await apiFetch(`${BASE_URL}/summary/project_id/${id}`);
     if(!response.ok){
       console.error(`httpエラー:${response.status}`);
     };
@@ -408,7 +411,7 @@ export const projectSummary = async (id:string): Promise<Summary | null> => {
 /*
 export const createUser = async(inputData: NewUserProfile):Promise<User | null> => {//初期登録時の
   try{
-    const response =await fetch(`${BASE_URL}/user_profile`);
+    const response =await apiFetch(`${BASE_URL}/user_profile`);
 
     if(!response.ok){
       console.log(`Userデータ取得エラー :status${response.status}`);
@@ -422,7 +425,7 @@ export const createUser = async(inputData: NewUserProfile):Promise<User | null> 
 
 export const loadUserProfile = async ():Promise<User | null>=>{//ログイン成功時などの処理かも
   try{
-    const response =await fetch(`${BASE_URL}/user_profile`);
+    const response =await apiFetch(`${BASE_URL}/user_profile`);
 
     if(!response.ok){
       console.log(`Userデータ取得エラー :status${response.status}`);
@@ -436,7 +439,7 @@ export const loadUserProfile = async ():Promise<User | null>=>{//ログイン成
 
 export const updateUserProfile = async (inputData:User): Promise<User | null>=>{//ユーザ情報更新のリクエスト
   try{
-    const response =await fetch(`${BASE_URL}/user_profile`);
+    const response =await apiFetch(`${BASE_URL}/user_profile`);
     return null;
   }catch(error){
     console.error("API通信エラー:", error);

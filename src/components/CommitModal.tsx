@@ -105,9 +105,6 @@ export default function CommitModal({
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 bg-zinc-900/50 backdrop-blur-xs grid place-items-center p-4 z-50 overflow-y-auto"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
     >
       <div className="w-full max-w-2xl bg-white rounded-2xl p-6 border border-zinc-200 shadow-xl my-8 font-sans text-zinc-800 animate-in fade-in zoom-in-95 duration-150">
         {/* ヘッダー */}
@@ -168,7 +165,7 @@ export default function CommitModal({
             )}
 
             <Stat label="今日累計" value={formatMs(draft.todayTotalMs)} />
-            <Stat label="累計" value={formatMs(draft.projectTotalMs)} />
+            <Stat label="プロジェクト累計" value={formatMs(draft.projectTotalMs)} />
           </div>
 
           <div className="text-xs text-zinc-400 font-mono">

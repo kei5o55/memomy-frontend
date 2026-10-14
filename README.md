@@ -234,3 +234,7 @@ Pull Requestおよび`main`ブランチへのpushをトリガーとして、
   - 納期から逆算し、セル内に現在進行中のプロジェクトを表示
  
 **その他今後の実装計画は Issue に記載しています**
+
+## メモ
+vitest 走らせるとき
+- npx vitest run test/○○.test.ts

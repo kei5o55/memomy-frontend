@@ -265,8 +265,10 @@ export default function TimerPage({
   };
 
   const router = useRouter();
+
   const handleBackToProjects = () => {
     if (!confirmLeaveIfNeeded()) return;
+    
     router.push("/");
   };
 
@@ -346,14 +348,6 @@ export default function TimerPage({
 
     startWithProject(selectedProject.id);
   };
-
-  {/*const getProjectCommits =async()=>{ 
-    if(!selectedProject) return;
-    const allCommit=await loadCommitsIdb();
-    const projectCommits =allCommit.filter((c)=>c.projectId === selectedProject.id).sort((a,b)=>b.endedAt - a.endedAt);
-    return projectCommits;
-  }*/}
- 
 
   const stop = async () => {
     if (!activeSession || !selectedProject) return;

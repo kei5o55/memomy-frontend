@@ -4,7 +4,7 @@ import ProjectsDashboard from "../components/ProjectsDashboard";
 import { baseOpenGraph } from "./shared-metadata";
 
 const description =
-  "イラスト制作や創作活動の作業時間・進捗画像・メモを記録し、積み重ねを可視化するワークログアプリ。ポモドーロタイマー付き。";
+  "イラスト制作や創作活動の作業時間・進捗画像・メモを記録し、積み重ねを可視化するワークログアプリ";
 
 export const metadata: Metadata = {
   description,

@@ -27,6 +27,9 @@ jobs:
 
       - name: Lint
         run: npx eslint .
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
 
       - name: Run tests
         run: npm run test:run

@@ -1,9 +1,20 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { baseOpenGraph } from "../shared-metadata";
+
+const description =
+  "memomy は、イラストなどの創作に向き合った過程や積み重ねた時間を記録・可視化するワークログアプリです。";
 
 export const metadata: Metadata = {
   title: "memomy について",
+  description,
   alternates: { canonical: "/about" },
+  openGraph: {
+    ...baseOpenGraph,
+    url: "/about",
+    title: "memomy について",
+    description,
+  },
 };
 
 export default function AboutPage() {

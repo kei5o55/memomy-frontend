@@ -168,7 +168,7 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-8 bg-slate-50 min-h-screen text-slate-800">
+    <main className="max-w-6xl mx-auto p-4 sm:p-6 space-y-8 bg-slate-50 min-h-screen text-slate-800">
       {/* 戻るボタン & ユーザーヘッダー */}
       <div className="flex items-center justify-between">
         <Link
@@ -364,7 +364,7 @@ export default function UserProfilePage() {
         />
       </div>
       <ContributionHeatmap commits={commitsAll} title="All Activity"></ContributionHeatmap>
-    </div>
+    </main>
     
   );
 }

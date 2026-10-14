@@ -1,9 +1,19 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { baseOpenGraph } from "../shared-metadata";
+
+const description = "memomy へのご意見・不具合報告・お問い合わせはこちらから。";
 
 export const metadata: Metadata = {
   title: "お問い合わせ",
+  description,
   alternates: { canonical: "/contact" },
+  openGraph: {
+    ...baseOpenGraph,
+    url: "/contact",
+    title: "お問い合わせ | memomy",
+    description,
+  },
 };
 
 export default function ContactPage() {

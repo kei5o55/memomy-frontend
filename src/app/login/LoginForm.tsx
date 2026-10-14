@@ -45,7 +45,7 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-8 shadow-sm space-y-6">
         <div className="border-b border-slate-100 pb-3">
           <span className="text-[11px] font-semibold text-sky-600 uppercase tracking-wider block">
@@ -137,6 +137,6 @@ export default function LoginForm() {
           </button>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

@@ -189,7 +189,7 @@ export default function TimerPage({
   useEffect(() => {
     document.title = running
       ? "⏱ 計測中 | memomy"
-      : "memomy";
+      : "作業タイマー";
 
     if (!running) return;
 

@@ -352,9 +352,10 @@ export default function ProjectsPage() {
             memomy
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            データはブラウザ（IndexedDB）にに保存されます
+            {isApiMode
+              ? "データはサーバーに保存されます"
+              : "データはブラウザ（IndexedDB）に保存されます"}
           </p>
-          <p>現在のモード：{process.env.NEXT_PUBLIC_API_MODE}</p>
         </div>
 
         <div className="flex items-center gap-3">

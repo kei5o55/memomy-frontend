@@ -10,9 +10,6 @@ export const metadata: Metadata = {
   },
   description:
     "イラスト制作や創作活動の時間や記録を残せるワークログアプリ。",
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     url: "https://memomy.net/",
@@ -20,7 +17,6 @@ export const metadata: Metadata = {
     title: "memomy｜創作活動を記録するワークログ",
     description:
       "日々の創作活動を記録し、積み重ねを可視化する。",
-    images: ["/og-image.png"],
   },
 };
 

@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+  // Google Search Console の所有権確認（HTML タグ方式）。未設定なら出力されない
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 const websiteJsonLd = {

@@ -22,6 +22,13 @@ export default function Footer() {
           </Link>
           ・
           <Link
+            href="/guide"
+            className="transition-colors hover:text-slate-900 dark:hover:text-white"
+          >
+            使い方ガイド
+          </Link>
+          ・
+          <Link
             href="/contact"
             className="transition-colors hover:text-slate-900 dark:hover:text-white"
           >

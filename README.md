@@ -123,8 +123,14 @@ memomyに制作過程を記録しておくことで、
   - Devise / devise-jwtを用いた認証機能を実装中。
 
 詳細は以下のリポジトリに記載しています。
-
 https://github.com/kei5o55/memomy-backend
+
+### テスト・開発環境
+- **Vitest**: ロジックやユーティリティ関数の単体テスト（Unit Test）を実施。
+- **Storybook**: UIコンポーネントの独立開発・コンポーネント駆動開発および視覚的テスト環境として導入。
+- **Docker / Docker Compose**
+  - Rails APIサーバーおよびPostgreSQLのコンテナ化。
+  - Docker Composeにより、依存関係（DB・環境変数等）を含めた立ち上げをコード管理化。新規環境への移行や複数端末での開発環境構築をスムーズに
 
 ## 主な機能一覧（現時点）
 

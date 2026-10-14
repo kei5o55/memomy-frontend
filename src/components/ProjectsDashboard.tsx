@@ -51,7 +51,7 @@ function calcTodayTotalMs(commits: Commit[]): number {
     .reduce((acc, c) => acc + (c.durationMs || 0), 0);
 }
 
-export default function ProjectsPage() {
+export default function ProjectsDashboard() {
   const router = useRouter();
   const handleLogout = async () => {
     await logout();

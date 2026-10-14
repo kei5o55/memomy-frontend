@@ -1,6 +1,7 @@
 import "./globals.css";
 import Footer from "../components/minor/Footer";
 import type { Metadata } from "next";
+import { baseOpenGraph } from "./shared-metadata";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://memomy.net"),
@@ -10,13 +11,15 @@ export const metadata: Metadata = {
   },
   description:
     "イラスト制作や創作活動の時間や記録を残せるワークログアプリ。",
+  // og:url / canonical は各ページで指定する（ここで指定すると全ページに同じ URL が付くため）
   openGraph: {
-    type: "website",
-    url: "https://memomy.net/",
-    siteName: "memomy",
+    ...baseOpenGraph,
     title: "memomy｜創作活動を記録するワークログ",
     description:
       "日々の創作活動を記録し、積み重ねを可視化する。",
+  },
+  twitter: {
+    card: "summary_large_image",
   },
 };
 
@@ -41,10 +44,10 @@ export default function RootLayout({
             __html: JSON.stringify(websiteJsonLd),
           }}
         />
-        {/* メインコンテンツエリア（余白を埋めてフッターを下に押し出す） */}
-        <main className="flex-1">
+        {/* メインコンテンツエリア（余白を埋めてフッターを下に押し出す）。<main> は各ページ側で持つ */}
+        <div className="flex-1">
           {children}
-        </main>
+        </div>
 
         {/* フッター */}
         <Footer />

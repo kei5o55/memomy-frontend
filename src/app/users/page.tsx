@@ -16,7 +16,7 @@ import {
   loadUserProfileIdb,
 } from "../../logic/storage-idb";
 
-import { loadProjects,loadCommits } from "../../logic/api-request";
+import { loadProjects,loadCommits,loadUserProfile } from "../../logic/api-request";
 import { HOST_URL } from "@/logic/url";
 
 import  {MASTER_BADGES}  from "@/logic/dummyDate";
@@ -34,6 +34,14 @@ export const initialUser: User = {
   createdAt: 1704067200000, // 2024-01-01T00:00:00.000Z
   updatedAt: 1709251200000, // 2024-03-01T00:00:00.000Z
 };
+
+// API モードのプロフィール取得：基本情報は API から取得し、
+// バックエンド未対応のアイコン・バッジだけ IndexedDB の値で補う
+async function loadUserProfileWithLocalExtras(): Promise<User | null> {
+  const [apiUser, localUser] = await Promise.all([loadUserProfile(), loadUserProfileIdb()]);
+  if (!apiUser) return null;
+  return { ...apiUser, icon: apiUser.icon ?? localUser.icon, badges: localUser.badges };
+}
 
 export default function UserProfilePage() {
   const [commitsAll, setCommitsAll] = useState<Commit[]>([]);
@@ -55,8 +63,7 @@ export default function UserProfilePage() {
         await Promise.all([
           isApiMode ? loadProjects() : loadProjectsIdb(),
           isApiMode ? loadCommits() : loadCommitsIdb(),
-          //isApiMode ? loadUserProfile() : loadUserProfileIdb(),
-          loadUserProfileIdb(),
+          isApiMode ? loadUserProfileWithLocalExtras() : loadUserProfileIdb(),
         ]);
 
       setProjects(nextProjects);

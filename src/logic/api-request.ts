@@ -1,7 +1,7 @@
-import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput } from "./api-types";
-import type { Project, Commit, DaySchedule, CalendarMemo, Summary} from "./types";
-import type { ApiProjectRes } from "./api-types";
-import { BASE_URL } from "./url";
+import type { NewCommitInput, NewDayScheduleInput, NewProjectInput, NewCalendarMemoInput, UserProfileInput } from "./api-types";
+import type { Project, Commit, DaySchedule, CalendarMemo, Summary, User } from "./types";
+import type { ApiProjectRes, ApiUserProfileRes } from "./api-types";
+import { BASE_URL, HOST_URL } from "./url";
 import { readJson } from "./case";
 import { apiFetch } from "./auth";
 
@@ -44,6 +44,17 @@ const toProject = (item: ApiProjectRes): Project => ({
   dueDate: item.dueDate ?? undefined,
   memo: item.memo ?? undefined,
   createdAt: new Date(item.createdAt).getTime(),
+});
+
+const toUserProfile = (item: ApiUserProfileRes): User => ({
+  ...item,
+  bio: item.bio ?? undefined,
+  bgmUrl: item.bgmUrl ?? undefined,
+  snsLinks: item.snsLinks ?? [],
+  // 相対パスで返るので HOST_URL と結合して <img src> にそのまま使える形にする
+  icon: item.icon ? `${HOST_URL}${item.icon}` : undefined,
+  createdAt: new Date(item.createdAt).getTime(),
+  updatedAt: new Date(item.updatedAt).getTime(),
 });
 
 type ApiError = { errors?: string[]; error?: string; message?: string };
@@ -408,41 +419,54 @@ export const projectSummary = async (id:string): Promise<Summary | null> => {
 
 };*/
 
-/*
-export const createUser = async(inputData: NewUserProfile):Promise<User | null> => {//初期登録時の
-  try{
-    const response =await apiFetch(`${BASE_URL}/user_profile`);
+// ===== ユーザープロフィール（ログイン中ユーザー自身） =====
 
-    if(!response.ok){
-      console.log(`Userデータ取得エラー :status${response.status}`);
+// ユーザープロフィールを取得する API
+export const loadUserProfile = async (): Promise<User | null> => {
+  try {
+    const response = await apiFetch(`${BASE_URL}/user_profile`);
+
+    if (!response.ok) {
+      console.error(`Userデータ取得エラー: status ${response.status}`);
+      return null;
     }
-    return null;
-  }catch(error){
+
+    return toUserProfile(await readJson<ApiUserProfileRes>(response));
+  } catch (error) {
     console.error("API通信エラー:", error);
     return null;
-  }
-}
-
-export const loadUserProfile = async ():Promise<User | null>=>{//ログイン成功時などの処理かも
-  try{
-    const response =await apiFetch(`${BASE_URL}/user_profile`);
-
-    if(!response.ok){
-      console.log(`Userデータ取得エラー :status${response.status}`);
-    }
-    return null;
-  }catch(error){
-    console.error("API通信エラー:", error);
-    return null;//nullが帰ると上手く言ってないってコト
   }
 };
 
-export const updateUserProfile = async (inputData:User): Promise<User | null>=>{//ユーザ情報更新のリクエスト
-  try{
-    const response =await apiFetch(`${BASE_URL}/user_profile`);
-    return null;
-  }catch(error){
+// ユーザープロフィールを更新する API（送らなかった項目は変更されない）
+export const updateUserProfile = async (inputData: UserProfileInput): Promise<User | null> => {
+  try {
+    const response = await apiFetch(`${BASE_URL}/user_profile`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userProfile: {
+          name: inputData.name,
+          bio: inputData.bio,
+          bgmUrl: inputData.bgmUrl,
+          snsLinks: inputData.snsLinks,
+        },
+      }),
+    });
+
+    const data = await readJson<ApiUserProfileRes & ApiError>(response);
+
+    if (!response.ok) {
+      alert(`プロフィールの更新に失敗しました:\n${toErrorMessage(data)}`);
+      return null;
+    }
+
+    return toUserProfile(data);
+  } catch (error) {
     console.error("API通信エラー:", error);
+    alert("サーバーとの通信に失敗しました");
     return null;
   }
-}*/
+};

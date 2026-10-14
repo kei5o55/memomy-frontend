@@ -1,9 +1,12 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { saveUserProfileIdb } from "../logic/storage-idb";
+import { updateUserProfile } from "../logic/api-request";
 import type { Badge, User } from "../logic/types";
 import BadgeBoard from "./BadgeBoard";
 import  BadgeSettingsModal  from "./BadgeSettingsModal";
+
+const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
 type Props = {
   open: boolean;
@@ -116,17 +119,35 @@ export default function UserProfileModal({
         .map((url) => url.trim())
         .filter((url) => url !== "");
 
-      const updatedUser: User = {
-        ...currentUser,
-        id: currentUser.id,
-        icon: iconResult,
-        name: name,
-        bio: bio,
-        bgmUrl: bgmUrl,
-        snsLinks: cleanedSnsLinks,
-        badges: selectedBadges, // 更新したバッジ配列を反映
-        updatedAt: Date.now(),
-      };
+      let updatedUser: User;
+
+      if (isApiMode) {
+        // 【API モード】name / bio / bgmUrl / snsLinks を Rails API へ保存
+        const saved = await updateUserProfile({
+          name,
+          bio,
+          bgmUrl,
+          snsLinks: cleanedSnsLinks,
+        });
+        // 失敗時は updateUserProfile 内でエラー表示済み。入力を残すためモーダルは閉じない
+        if (!saved) return;
+
+        // アイコン・バッジはバックエンド未対応のため、当面は IndexedDB に保存する
+        updatedUser = { ...saved, icon: iconResult, badges: selectedBadges };
+      } else {
+        // 【ローカル/オフライン モード】すべて IndexedDB へ保存
+        updatedUser = {
+          ...currentUser,
+          id: currentUser.id,
+          icon: iconResult,
+          name: name,
+          bio: bio,
+          bgmUrl: bgmUrl,
+          snsLinks: cleanedSnsLinks,
+          badges: selectedBadges, // 更新したバッジ配列を反映
+          updatedAt: Date.now(),
+        };
+      }
 
       await saveUserProfileIdb(updatedUser);
       onSuccess(updatedUser);

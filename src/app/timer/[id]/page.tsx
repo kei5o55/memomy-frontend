@@ -187,9 +187,17 @@ export default function TimerPage({
   }, [sessions, loadedOnce]);
 
   useEffect(() => {
+    document.title = running
+      ? "⏱ 計測中 | memomy"
+      : "memomy";
+
     if (!running) return;
+
     const id = window.setInterval(() => setNow(Date.now()), 250);
-    return () => window.clearInterval(id);
+
+    return () => {
+      window.clearInterval(id);
+    };
   }, [running]);
 
   const currentElapsedMs = useMemo(() => {

@@ -9,15 +9,16 @@ import ContributionHeatmap from "../../components/ContributionHeatmap";
 import BadgeBoard from "@/components/BadgeBoard";
 import  DomainIconHelper  from "@/logic/domainIconHelper";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   loadProjectsIdb,
   loadCommitsIdb,
-  //loadSessionsIdb,
   loadUserProfileIdb,
 } from "../../logic/storage-idb";
 
 import { loadProjects,loadCommits,loadUserProfile } from "../../logic/api-request";
 import { HOST_URL } from "@/logic/url";
+import { logout } from "@/logic/auth";
 
 import  {MASTER_BADGES}  from "@/logic/dummyDate";
 
@@ -43,12 +44,20 @@ async function loadUserProfileWithLocalExtras(): Promise<User | null> {
   return { ...apiUser, icon: apiUser.icon ?? localUser.icon, badges: localUser.badges };
 }
 
+
+
 export default function UserProfilePage() {
   const [commitsAll, setCommitsAll] = useState<Commit[]>([]);
   const [user, setUserProfile] = useState<User>(initialUser);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
+  //ログアウト用ハンドラ（jwt執行処理＋router)
+  const router = useRouter();
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   // プロフィール編集モーダル用state
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -177,6 +186,14 @@ export default function UserProfilePage() {
         >
           ← 戻る
         </Link>
+         {isApiMode && (
+            <button
+              onClick={handleLogout}
+              className="text-s font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 py-2 px-3.5 rounded-xl shadow-sm transition-colors cursor-pointer"
+            >
+              ログアウト
+            </button>
+          )}
       </div>
 
       <header className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

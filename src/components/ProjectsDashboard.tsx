@@ -23,8 +23,6 @@ const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 import { loadProjects, createProject, loadCommits, createCommit, deleteProject, updateProject, allProjectSummary } from "../logic/api-request";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { logout } from "../logic/auth";
 
 function uid() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -52,11 +50,6 @@ function calcTodayTotalMs(commits: Commit[]): number {
 }
 
 export default function ProjectsDashboard() {
-  const router = useRouter();
-  const handleLogout = async () => {
-    await logout();
-    router.push("/login");
-  };
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [commitsAll, setCommitsAll] = useState<Commit[]>([]);
@@ -365,14 +358,6 @@ export default function ProjectsDashboard() {
           >
             ← userpageへ
           </Link>
-          {isApiMode && (
-            <button
-              onClick={handleLogout}
-              className="text-xs font-semibold text-slate-600 bg-white border border-slate-300 hover:bg-slate-50 py-2 px-3.5 rounded-xl shadow-sm transition-colors cursor-pointer"
-            >
-              ログアウト
-            </button>
-          )}
           <button
             onClick={() => setIsCreateOpen(true)}
             className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-1.5"

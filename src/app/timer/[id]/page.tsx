@@ -51,11 +51,14 @@ export default function TimerPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // sessions: 進行中の作業状態（WorkSession）。モードに関係なく常に IndexedDB に保持
+  // commits : 確定済みの作業ログ。API / IndexedDB のどちらかから読む
   const [sessions, setSessions] = useState<WorkSession[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [commits,setCommits]=useState<Commit[]>([]);
   const [loadedOnce, setLoadedOnce] = useState(false);
+  // ポモドーロの状態はページ内だけで管理（永続化しない）
   const [pomodoroEnabled, setPomodoroEnabled] = useState(false);
   const [phase, setPhase] = useState<TimerMode>("idle");
   const [phaseStartedAt, setPhaseStartedAt] = useState<number | null>(null);
@@ -83,6 +86,8 @@ export default function TimerPage({
     return projects.find((p) => p.id === projectId) ?? null;
   }, [projectId, projects]);
 
+  // 初回マウント時にプロジェクト・セッション・作業ログをまとめて読み込む
+  // （cancelled はアンマウント後に setState しないためのフラグ）
   useEffect(() => {
     let cancelled = false;
 
@@ -141,8 +146,10 @@ export default function TimerPage({
   const pomodoroBreakMs =
     (selectedProject?.pomodoroBreakMinutes ?? 5) * 60 * 1000;
 
+  // 経過時間の表示用「現在時刻」。計測中だけ定期的に更新して再描画させる
   const [now, setNow] = useState<number>(() => Date.now());
 
+  // このプロジェクトの未終了セッション（activeSession）を、状態別に running / paused として派生させる
   const activeSession = useMemo(
     () =>
       sessions.find((s) => s.projectId === projectId && s.endedAt == null) ??
@@ -173,6 +180,8 @@ export default function TimerPage({
   );
 
   //ノート入力
+  // セッションが切り替わったら（復元・開始・終了時）メモ欄をそのセッションの内容で初期化する。
+  // useEffect ではなくレンダー中に setState する「前回値と比較する」パターン
   const [prevSessionId, setPrevSessionId] = useState(activeSession?.id);
   const [note, setNote] = useState(activeSession?.note ?? "");
 
@@ -181,11 +190,14 @@ export default function TimerPage({
     setNote(activeSession?.note ?? "");
   }
 
+  // sessions が変わるたびに IndexedDB へ保存（リロード時の復元用）。
+  // 読み込み完了前に空配列で上書きしないよう loadedOnce で待つ
   useEffect(() => {
     if (!loadedOnce) return;
     void saveSessionsIdb(sessions);
   }, [sessions, loadedOnce]);
 
+  // 計測中のみ 250ms ごとに now を更新（一時停止中は止める）
   useEffect(() => {
     document.title = running
       ? "⏱ 計測中 | memomy"
@@ -200,6 +212,8 @@ export default function TimerPage({
     };
   }, [running]);
 
+  // 経過時間 = (now または一時停止時刻) - startedAt。
+  // 再開時に startedAt を一時停止分だけ後ろへずらすので、停止時間は自然に除外される
   const currentElapsedMs = useMemo(() => {
     const s = activeSession;
     if (!s) return 0;
@@ -224,6 +238,7 @@ export default function TimerPage({
     currentPhaseDurationMs - currentPhaseElapsedMs
   );
 
+  // ポモドーロのフェーズ切り替え：残り時間が 0 になったら SE を鳴らして work ⇄ break を交代
   useEffect(() => {
     if (
       !pomodoroEnabled ||
@@ -272,6 +287,7 @@ export default function TimerPage({
     router.push("/");
   };
 
+  // 一時停止：pausedAt を記録するだけ（経過時間は pausedAt - startedAt で固定される）
   const pause = () => {
     if (!running) return;
     const pausedAt = Date.now();
@@ -288,6 +304,8 @@ export default function TimerPage({
     );
   };
 
+  // 再開：停止前の経過時間を保ったまま startedAt を「今 - 経過時間」に付け替える。
+  // ポモドーロのフェーズ開始時刻も同じ考え方でずらす
   const resume = () => {
     if (!paused) return;
 
@@ -329,6 +347,7 @@ export default function TimerPage({
     setSessions((prev) => [s, ...prev]);
   };
 
+  // 開始：ポモドーロ状態を初期化してから新しいセッションを作る
   const start = () => {
     if (!selectedProject) return;
 
@@ -349,6 +368,8 @@ export default function TimerPage({
     startWithProject(selectedProject.id);
   };
 
+  // 停止：この時点ではセッションを消さず、Commit の下書き（累計時間・直近メモ付き）を作って
+  // CommitModal を開くだけ。実際の保存・破棄はモーダルのボタンで行う
   const stop = async () => {
     if (!activeSession || !selectedProject) return;
 
@@ -408,6 +429,7 @@ export default function TimerPage({
     setIsCommitOpen(true);
   };
 
+  // メモ入力をセッションにも反映（→ IndexedDB に保存され、リロード後も残る）
   const updateActiveNote = (value: string) => {
     setNote(value);
     if (!activeSession) return;
@@ -416,11 +438,14 @@ export default function TimerPage({
     );
   };
 
+  // アンマウント時のクリーンアップから最新の running を参照するための ref
+  // （空依存の effect 内では state が初回値のままになるため）
   const runningRef = useRef<WorkSession | null>(null);
   useEffect(() => {
     runningRef.current = running;
   }, [running]);
 
+  // ページを離れる（アンマウント）時、計測中なら一時停止扱いにする
   useEffect(() => {
     return () => {
       const r = runningRef.current;
@@ -434,6 +459,7 @@ export default function TimerPage({
     };
   }, []);
 
+  // 未終了セッションがある状態でタブを閉じる・リロードする際にブラウザの確認ダイアログを出す
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!activeSession) return;
@@ -457,6 +483,7 @@ export default function TimerPage({
     setSessions((prev) => prev.filter((s) => s.id !== activeSession.id));
   };
 
+  // Commit の保存先をモードで切り替える（API は ID をサーバー採番、IDB はクライアントで uid() 採番）
   const saveCommitData = async (
     projectId: string,
     draftCommit: DraftCommit

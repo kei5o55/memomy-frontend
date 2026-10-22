@@ -350,16 +350,18 @@ export default function UserProfilePage() {
                   className="group relative bg-slate-900 rounded-xl overflow-hidden border border-slate-200 aspect-square shadow-sm flex flex-col justify-end"
                 >
                   {src && (
-                    <ArtLightbox
-                      src={src}
-                      alt={commit.note || "進捗画像"}
-                    />
+                    <div>
+                      <ArtLightbox
+                        src={src}
+                        alt={commit.note || "進捗画像"}
+                      />
+                    </div>
                   )}
 
                   <div className="relative z-10 bg-gradient-to-t from-slate-950/90 via-slate-950/50 to-transparent p-2.5 text-white space-y-1">
-                    <span className="text-[10px] text-sky-300 font-medium truncate block">
+                    <Link href={`/project/${project?.id}`} className="text-[10px] text-sky-300 font-medium truncate block">
                       {project?.name || "プロジェクト"}
-                    </span>
+                    </Link>
                   </div>
                 </div>
               );

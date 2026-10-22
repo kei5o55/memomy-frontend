@@ -13,6 +13,7 @@ import Link from "next/link";
 import { use } from "react";
 
 import { HOST_URL } from "@/logic/url";
+import ArtLightbox from "@/components/minor/ArtLightbox";
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -47,6 +48,7 @@ export default function ProjectDetailPage({
   
   // ギャラリー用: Blobから生成した Object URL を安全に保持する State
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+  
 
   const refresh = async () => {
     setLoading(true);
@@ -148,6 +150,22 @@ export default function ProjectDetailPage({
         Object.values(urls).forEach((url) => URL.revokeObjectURL(url));
       };
   }, [commitsWithImage]);
+
+  // 最新の画像付きコミットの URL（state にせず毎回計算）
+  const lastCommit = commits.find((c) => !!c.image);
+
+  let lastCommitImageUrl: string | undefined;
+  if (lastCommit) {//画像付きコミットが見つかった時
+    // 1. Blob URL があれば優先
+    lastCommitImageUrl = imageUrls[lastCommit.id];
+
+    // 2. なければ、文字列のパスから URL を組み立てる
+    if (!lastCommitImageUrl && isApiMode && typeof lastCommit.image === "string") {
+      lastCommitImageUrl = /^https?:\/\//.test(lastCommit.image)
+        ? lastCommit.image                // すでに完全な URL
+        : `${HOST_URL}${lastCommit.image}`; // 相対パス
+    }
+  }
 
   const totalMs = useMemo(
     () => commits.reduce((sum, c) => sum + c.durationMs, 0),
@@ -416,6 +434,16 @@ export default function ProjectDetailPage({
             </div>
           </div>
         ) : null}
+      </section>
+
+      <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="overflow-hidden rounded-xl border border-slate-200">
+            {lastCommitImageUrl && (
+              <ArtLightbox
+              src={lastCommitImageUrl}
+              alt="project Image"
+            />)}
+          </div>
       </section>
 
       {/* プロジェクトメモ */}

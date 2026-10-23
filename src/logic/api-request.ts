@@ -470,3 +470,51 @@ export const updateUserProfile = async (inputData: UserProfileInput): Promise<Us
     return null;
   }
 };
+
+// アイコン画像をアップロードする API（既にアイコンがあれば差し替え）。更新後のプロフィールを返す
+// multipart で送るため Content-Type は指定しない（ブラウザが boundary 付きで設定する）
+export const uploadUserIcon = async (image: Blob, filename: string): Promise<User | null> => {
+  try {
+    const formData = new FormData();
+    formData.append("userIcon[image]", image, filename);
+
+    const response = await apiFetch(`${BASE_URL}/user_profile/icon`, {
+      method: "PUT",
+      body: formData,
+    });
+
+    const data = await readJson<ApiUserProfileRes & ApiError>(response);
+
+    if (!response.ok) {
+      alert(`アイコンの保存に失敗しました:\n${toErrorMessage(data)}`);
+      return null;
+    }
+
+    return toUserProfile(data);
+  } catch (error) {
+    console.error("API通信エラー:", error);
+    alert("サーバーとの通信に失敗しました");
+    return null;
+  }
+};
+
+// アイコン画像を削除する API（アイコンが無い場合も成功扱い）
+export const deleteUserIcon = async (): Promise<boolean> => {
+  try {
+    const response = await apiFetch(`${BASE_URL}/user_profile/icon`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      console.error(`アイコン削除失敗: ${response.status} ${response.statusText}`);
+      alert("アイコンの削除に失敗しました");
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("API通信エラー:", error);
+    alert("サーバーとの通信に失敗しました");
+    return false;
+  }
+};

@@ -16,7 +16,7 @@ export type NewCalendarMemoInput= Omit<CalendarMemo,'id' | 'createdAt'>;
 export type NewUserProfile = Omit<User,`id`|`icon`|`iconBlob`|`bio`|`bgmUrl`|`snsLinks`|`badges`|`createdAt`|`updatedAt`>;
 
 
-// プロフィール更新（PATCH /user_profile）で送る内容。アイコンはバックエンド未対応のため含めない
+// プロフィール更新（PATCH /user_profile）で送る内容。アイコンは multipart の uploadUserIcon で別に送る
 export type UserProfileInput = Pick<User, "name" | "bio" | "bgmUrl" | "snsLinks">;
 
 

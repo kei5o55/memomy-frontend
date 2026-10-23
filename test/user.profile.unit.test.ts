@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { loadUserProfile, updateUserProfile } from "@/logic/api-request";
+import { deleteUserIcon, loadUserProfile, updateUserProfile, uploadUserIcon } from "@/logic/api-request";
 
 // Rails からのレスポンス（snake_case のまま）
 const railsProfile = {
@@ -137,6 +137,74 @@ describe("user profile API", () => {
       vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network")));
 
       expect(await updateUserProfile({ name: "自分" })).toBeNull();
+    });
+  });
+  describe("uploadUserIcon", () => {
+    const png = new Blob(["png"], { type: "image/png" });
+
+    test("FormData の userIcon[image] にファイルを入れて PUT する", async () => {
+      const fetchMock = mockFetch({ ...railsProfile, icon: "/rails/active_storage/blobs/icon.png" });
+
+      await uploadUserIcon(png, "icon.png");
+
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toMatch(/\/api\/v1\/user_profile\/icon$/);
+      expect(init.method).toBe("PUT");
+      expect(init.body).toBeInstanceOf(FormData);
+      const file = (init.body as FormData).get("userIcon[image]") as File;
+      expect(file.name).toBe("icon.png");
+      expect(file.type).toBe("image/png");
+      // multipart の boundary はブラウザに付けさせるため、Content-Type は指定しない
+      expect(new Headers(init.headers).has("Content-Type")).toBe(false);
+    });
+
+    test("更新後のプロフィールを返し、icon は HOST_URL と結合した URL になる", async () => {
+      mockFetch({ ...railsProfile, icon: "/rails/active_storage/blobs/icon.png" });
+
+      const user = await uploadUserIcon(png, "icon.png");
+
+      expect(user?.name).toBe("自分");
+      expect(user?.icon).toMatch(/\/rails\/active_storage\/blobs\/icon\.png$/);
+    });
+
+    test("バリデーションエラー時は null を返しメッセージを表示する", async () => {
+      const alertMock = vi.fn();
+      vi.stubGlobal("alert", alertMock);
+      mockFetch({ errors: ["Image は 2MB 以下にしてください"] }, 422);
+
+      expect(await uploadUserIcon(png, "icon.png")).toBeNull();
+      expect(alertMock).toHaveBeenCalledWith(expect.stringContaining("Image は 2MB 以下にしてください"));
+    });
+
+    test("通信エラー時は null を返す", async () => {
+      vi.stubGlobal("alert", vi.fn());
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network")));
+
+      expect(await uploadUserIcon(png, "icon.png")).toBeNull();
+    });
+  });
+
+  describe("deleteUserIcon", () => {
+    test("DELETE /user_profile/icon を呼び、204 なら true を返す", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      expect(await deleteUserIcon()).toBe(true);
+
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toMatch(/\/api\/v1\/user_profile\/icon$/);
+      expect(init.method).toBe("DELETE");
+    });
+
+    test("失敗時は false を返しメッセージを表示する", async () => {
+      const alertMock = vi.fn();
+      vi.stubGlobal("alert", alertMock);
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch({}, 500);
+
+      expect(await deleteUserIcon()).toBe(false);
+      expect(alertMock).toHaveBeenCalled();
     });
   });
 });

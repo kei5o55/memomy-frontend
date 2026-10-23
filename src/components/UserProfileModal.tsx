@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { saveUserProfileIdb } from "../logic/storage-idb";
-import { updateUserProfile } from "../logic/api-request";
+import { updateUserProfile, uploadUserIcon, deleteUserIcon } from "../logic/api-request";
+import { ICON_MAX_BYTES, isAllowedIconType, resizeIconImage } from "../logic/icon-image";
 import type { Badge, User } from "../logic/types";
 import BadgeBoard from "./BadgeBoard";
 import  BadgeSettingsModal  from "./BadgeSettingsModal";
@@ -80,6 +81,8 @@ export default function UserProfileModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     currentUser?.icon ?? null
   );
+  // 「削除」が押されたか（保存時にアイコンを消す）
+  const [iconRemoved, setIconRemoved] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -88,10 +91,27 @@ export default function UserProfileModal({
   // 画像選択時のプレビュー生成
   const handleIconChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setIconFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    // 同じファイルを選び直しても onChange が発火するようにリセットする
+    e.target.value = "";
+    if (!file) return;
+
+    if (!isAllowedIconType(file)) {
+      alert("アイコンは PNG / JPEG / WebP / GIF のいずれかを選んでください");
+      return;
     }
+
+    if (iconFile && previewUrl) URL.revokeObjectURL(previewUrl);
+    setIconFile(file);
+    setIconRemoved(false);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  // アイコンを外す（保存するまでは反映しない）
+  const handleIconRemove = () => {
+    if (iconFile && previewUrl) URL.revokeObjectURL(previewUrl);
+    setIconFile(undefined);
+    setIconRemoved(true);
+    setPreviewUrl(null);
   };
 
   // ファイルを Promise で Base64 文字列に変換するヘルパー関数
@@ -110,11 +130,6 @@ export default function UserProfileModal({
     setIsSubmitting(true);
 
     try {
-      let iconResult = currentUser?.icon ?? "";
-      if (iconFile) {
-        iconResult = await convertFileToBase64(iconFile);
-      }
-
       const cleanedSnsLinks = snsLinks
         .map((url) => url.trim())
         .filter((url) => url !== "");
@@ -122,20 +137,39 @@ export default function UserProfileModal({
       let updatedUser: User;
 
       if (isApiMode) {
-        // 【API モード】name / bio / bgmUrl / snsLinks を Rails API へ保存
+        // 【API モード】アイコンを先に保存する。形式・サイズのエラー時はプロフィールも保存せず、入力を残すためモーダルは閉じない
+        // （失敗時のエラー表示は各 API 関数内で済んでいる）
+        if (iconFile) {
+          const { blob, filename } = await resizeIconImage(iconFile);
+          if (blob.size > ICON_MAX_BYTES) {
+            alert("アイコン画像は 2MB 以下にしてください");
+            return;
+          }
+          if (!(await uploadUserIcon(blob, filename))) return;
+        } else if (iconRemoved) {
+          if (!(await deleteUserIcon())) return;
+        }
+
+        // name / bio / bgmUrl / snsLinks を Rails API へ保存（レスポンスには保存後のアイコンも含まれる）
         const saved = await updateUserProfile({
           name,
           bio,
           bgmUrl,
           snsLinks: cleanedSnsLinks,
         });
-        // 失敗時は updateUserProfile 内でエラー表示済み。入力を残すためモーダルは閉じない
         if (!saved) return;
 
-        // アイコン・バッジはバックエンド未対応のため、当面は IndexedDB に保存する
-        updatedUser = { ...saved, icon: iconResult, badges: selectedBadges };
+        // バッジはバックエンド未対応のため、当面は IndexedDB に保存する
+        updatedUser = { ...saved, badges: selectedBadges };
+        // アイコンはサーバーの値を正とするため IndexedDB には残さない
+        await saveUserProfileIdb({ ...updatedUser, icon: undefined });
       } else {
         // 【ローカル/オフライン モード】すべて IndexedDB へ保存
+        let iconResult = iconRemoved ? undefined : currentUser?.icon;
+        if (iconFile) {
+          iconResult = await convertFileToBase64(iconFile);
+        }
+
         updatedUser = {
           ...currentUser,
           id: currentUser.id,
@@ -147,9 +181,15 @@ export default function UserProfileModal({
           badges: selectedBadges, // 更新したバッジ配列を反映
           updatedAt: Date.now(),
         };
+        await saveUserProfileIdb(updatedUser);
       }
 
-      await saveUserProfileIdb(updatedUser);
+      // 次にモーダルを開いて保存したときに同じ画像を再送しないよう、アイコンの選択状態を保存済みの値に戻す
+      if (iconFile && previewUrl) URL.revokeObjectURL(previewUrl);
+      setIconFile(undefined);
+      setIconRemoved(false);
+      setPreviewUrl(updatedUser.icon ?? null);
+
       onSuccess(updatedUser);
       onClose();
     } catch (error) {
@@ -201,17 +241,28 @@ export default function UserProfileModal({
                   )}
                 </div>
                 <div>
-                  <label className="cursor-pointer inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-colors shadow-2xs">
-                    画像を変更
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleIconChange}
-                      className="hidden"
-                    />
-                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <label className="cursor-pointer inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-colors shadow-2xs">
+                      画像を変更
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        onChange={handleIconChange}
+                        className="hidden"
+                      />
+                    </label>
+                    {previewUrl && (
+                      <button
+                        type="button"
+                        onClick={handleIconRemove}
+                        className="px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-rose-500 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                      >
+                        削除
+                      </button>
+                    )}
+                  </div>
                   <p className="text-[10px] text-slate-400 mt-1">
-                    JPG, PNG, GIF
+                    PNG, JPEG, WebP, GIF（2MB まで）
                   </p>
                 </div>
               </div>

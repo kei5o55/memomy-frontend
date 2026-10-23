@@ -36,12 +36,13 @@ export const initialUser: User = {
   updatedAt: 1709251200000, // 2024-03-01T00:00:00.000Z
 };
 
-// API モードのプロフィール取得：基本情報は API から取得し、
-// バックエンド未対応のアイコン・バッジだけ IndexedDB の値で補う
+// API モードのプロフィール取得：基本情報とアイコンは API から取得し、
+// バックエンド未対応のバッジだけ IndexedDB の値で補う
+// （アイコンは IndexedDB の値で補わない。サーバーで削除したアイコンが表示され続けてしまうため）
 async function loadUserProfileWithLocalExtras(): Promise<User | null> {
   const [apiUser, localUser] = await Promise.all([loadUserProfile(), loadUserProfileIdb()]);
   if (!apiUser) return null;
-  return { ...apiUser, icon: apiUser.icon ?? localUser.icon, badges: localUser.badges };
+  return { ...apiUser, badges: localUser.badges };
 }
 
 

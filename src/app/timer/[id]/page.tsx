@@ -760,8 +760,8 @@ export default function TimerPage({
           {activeSession ? (
             <>
               Started: {new Date(activeSession.startedAt).toLocaleString()}{" "}
-              <span className="font-semibold uppercase text-zinc-600">
-                [{activeSession.status}]
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-zinc-100 text-zinc-700 border border-zinc-300">
+                {activeSession.status}
               </span>
             </>
           ) : (

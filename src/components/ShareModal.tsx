@@ -6,7 +6,7 @@ type Props ={
     open: boolean;
     onCancel:()=> void;
     project?: Project;//街頭プロジェクトをもらう
-    totalMs?: number;
+    totalMs?: number;//パースシテもいいかも。
     commit?: Commit;//ツイートに使う文章のやつ
 }
 

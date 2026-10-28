@@ -23,6 +23,7 @@ const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 import { loadProjects, createProject, loadCommits, createCommit, deleteProject, updateProject, allProjectSummary } from "../logic/api-request";
 
 import Link from "next/link";
+import ShareModal from "./ShareModal";
 
 function uid() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -62,6 +63,7 @@ export default function ProjectsDashboard() {
   const [targetProjectId, setTargetProjectId] = useState<string | null>(null);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isTestOpen,setIsTestOpen] = useState(false);
   
   // 削除確認モーダル用の State
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
@@ -108,6 +110,10 @@ export default function ProjectsDashboard() {
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, []);
+
+  const handleTestOpen = () => {
+    setIsTestOpen(true)
+  };
 
   // ダイレクトコミットモーダルを開く処理
   const handleOpenDirectCommit = (project: Project) => {
@@ -564,6 +570,8 @@ export default function ProjectsDashboard() {
       />
 
       <div className="space-y-6 pt-4 border-t border-slate-200" />
+      <button onClick={handleTestOpen} className="cursor-pointer border border-zinc-500">testopen</button>
+      <ShareModal open={isTestOpen} onCancel={()=>{setIsTestOpen(false)}}></ShareModal>
     </main>
   );
 }

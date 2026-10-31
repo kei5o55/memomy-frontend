@@ -571,7 +571,7 @@ export default function ProjectsDashboard() {
 
       <div className="space-y-6 pt-4 border-t border-slate-200" />
       <button onClick={handleTestOpen} className="cursor-pointer border border-zinc-500">testopen</button>
-      <ShareModal open={isTestOpen} onCancel={()=>{setIsTestOpen(false)}}></ShareModal>
+      <ShareModal open={isTestOpen} onCancel={()=>{setIsTestOpen(false)}} commits={commitsAll} projects={projects}></ShareModal>
     </main>
   );
 }

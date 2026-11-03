@@ -5,7 +5,7 @@ import type { Commit, Project } from "./types";
 // X の投稿画面を開く Web Intent のエンドポイント（ログイン不要・API キー不要）
 export const X_INTENT_URL = "https://x.com/intent/tweet";
 export const SHARE_SITE_URL = "https://memomy.net";
-export const SHARE_HASHTAGS = ["memomy"];
+//export const SHARE_HASHTAGS = ["memomy"];
 // 本文に並べるプロジェクトの最大数（X の文字数制限に収めるため）
 const MAX_PROJECTS_IN_TEXT = 3;
 
@@ -71,7 +71,7 @@ export function buildDailySummary(commits: Commit[], projects: Project[], date: 
  * TODO: 文面のテンプレートを選べるようにする／X の文字数（日本語は 1 文字 2 カウント）を厳密に数える
  */
 export function buildDailyShareText(summary: DailySummary): string {
-  const [, month, day] = summary.date.split("-").map(Number);
+  const [, month, day] = summary.date.split("-").map(Number);//yyyy-mm-ddでくる
 
   if (summary.commitCount === 0) {
     return `${month}/${day} は作業記録がありませんでした。明日もがんばる！`;
@@ -94,7 +94,7 @@ export function buildDailyShareText(summary: DailySummary): string {
 export function buildXIntentUrl({
   text,
   url = SHARE_SITE_URL,
-  hashtags = SHARE_HASHTAGS,
+  //hashtags = SHARE_HASHTAGS,
 }: {
   text: string;
   url?: string;
@@ -102,6 +102,6 @@ export function buildXIntentUrl({
 }): string {
   const params = new URLSearchParams({ text });
   if (url) params.set("url", url);
-  if (hashtags.length > 0) params.set("hashtags", hashtags.join(","));
+  //if (hashtags.length > 0) params.set("hashtags", hashtags.join(","));
   return `${X_INTENT_URL}?${params.toString()}`;
 }

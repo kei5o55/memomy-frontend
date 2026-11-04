@@ -84,6 +84,23 @@ function ShareModalContent({
                     />
                 </div>
 
+                {/*コミットごと*/}
+                <div className="space-y-1">
+                    {commits.length === 0 ? (
+                        <div className="text-sm text-zinc-500">
+                            コミット履歴はありません
+                        </div>
+                    ):(
+                    <div>
+                    {commits.map((c) => (
+                            <li key={c.id}>
+                                {c.id}
+                            </li>
+                    ))}
+                    </div>
+                    )}
+                </div>
+
                 {/* 集計結果 */}
                 <div className="grid grid-cols-2 gap-3 text-center">
                     <div className="rounded-xl bg-zinc-50 border border-zinc-100 p-3">

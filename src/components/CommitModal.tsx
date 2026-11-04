@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import CommitShareModal from "./CommitShareModal";
 
 export type DraftCommitImage = {
   name: string;
@@ -59,6 +60,7 @@ export default function CommitModal({
   onDiscard,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [shareOpen,setShareOpen] = useState(false);
 
   const durationMs = useMemo(() => {
     if (!draft) return 0;
@@ -312,6 +314,13 @@ export default function CommitModal({
 
           {/* 右側アクション：保存系ボタン */}
           <div className="flex items-center gap-2 ml-auto">
+            <button 
+              onClick={() => {setShareOpen(true)}}
+              className="text-sm font-semibold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-300 py-2 px-4 rounded-xl transition-colors cursor-pointer shadow-xs"
+            >
+              testbottun
+            </button>
+              
             <button
               onClick={onSave}
               className="text-sm font-semibold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-300 py-2 px-4 rounded-xl transition-colors cursor-pointer shadow-xs"
@@ -330,6 +339,7 @@ export default function CommitModal({
           </div>
         </div>
       </div>
+      <CommitShareModal open={shareOpen} onCancel={() => {setShareOpen(false)}}></CommitShareModal>
     </div>
   );
 }

@@ -22,6 +22,12 @@ export type DailySummary = {
   projects: DailyProjectSummary[]; // 作業時間の長い順
 };
 
+export type CommitSummary = {
+  date: string;
+  totalMs: number;
+  project: Project;
+}
+
 // ローカル時刻の "YYYY-MM-DD"
 export function toDateKey(ms: number): string {
   const d = new Date(ms);
@@ -104,4 +110,13 @@ export function buildXIntentUrl({
   if (url) params.set("url", url);
   //if (hashtags.length > 0) params.set("hashtags", hashtags.join(","));
   return `${X_INTENT_URL}?${params.toString()}`;
+}
+
+
+//CommitModalから呼び出す共有用メッセージ作成関数
+//worksessionを受け取って整形でいいかもしれん
+export function buidlCommitShareText(summary: CommitSummary) :string {
+  return[
+    `test`,
+  ].join("\n");
 }

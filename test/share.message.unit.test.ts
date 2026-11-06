@@ -5,6 +5,7 @@ import {
   buildXIntentUrl,
   formatDurationJa,
   toDateKey,
+  buildCommitShareText,
 } from "@/logic/shareMessage";
 import type { Commit, Project } from "@/logic/types";
 
@@ -77,7 +78,7 @@ describe("shareMessage", () => {
       );
 
       expect(buildDailyShareText(summary)).toBe(
-        ["10/31 の作業記録", "合計 2時間15分（2 回）", "・イラスト練習：1時間30分", "・COMITIA新刊：45分"].join("\n")
+        ["10/31 の作業記録", "合計 2時間15分（2 回）", "・イラスト練習：1時間30分", "・COMITIA新刊：45分", ""].join("\n")
       );
     });
 
@@ -89,7 +90,7 @@ describe("shareMessage", () => {
 
       expect(text).toContain("・c：");
       expect(text).not.toContain("・d：");
-      expect(text.endsWith("ほか 2 件")).toBe(true);
+      expect(text.endsWith("ほか 2 件\n")).toBe(true);
     });
 
     test("作業が無い日は専用の文面にする", () => {
@@ -100,13 +101,14 @@ describe("shareMessage", () => {
   });
 
   describe("buildXIntentUrl", () => {
-    test("text・url・hashtags を URL エンコードして X の Intent URL を作る", () => {
+    test("text・url を URL エンコードして X の Intent URL を作る", () => {
       const url = new URL(buildXIntentUrl({ text: "10/31 の作業記録\n合計 2時間&", url: "https://memomy.net", hashtags: ["memomy", "絵"] }));
 
       expect(url.origin + url.pathname).toBe("https://x.com/intent/tweet");
       expect(url.searchParams.get("text")).toBe("10/31 の作業記録\n合計 2時間&");
       expect(url.searchParams.get("url")).toBe("https://memomy.net");
-      expect(url.searchParams.get("hashtags")).toBe("memomy,絵");
+      // ハッシュタグは今は付けない（SHARE_HASHTAGS をコメントアウト中）
+      expect(url.searchParams.has("hashtags")).toBe(false);
     });
 
     test("url・hashtags を空にすると付けない", () => {
@@ -115,5 +117,30 @@ describe("shareMessage", () => {
       expect(url.searchParams.has("url")).toBe(false);
       expect(url.searchParams.has("hashtags")).toBe(false);
     });
+  });
+});
+
+describe("buildCommitShareText", () => {
+  const base = {
+    projectName: "イラスト練習",
+    commitNumber: 3,
+    durationMs: 90 * 60000,
+    todayTotalMs: 135 * 60000,
+    note: "線画の修正",
+  };
+
+  test("プロジェクト名・回数・作業時間・メモを入れる", () => {
+    expect(buildCommitShareText(base)).toBe(
+      ["「イラスト練習」#3 の作業を記録しました", "今回 1時間30分（今日の合計 2時間15分）", "線画の修正", ""].join("\n")
+    );
+  });
+
+  test("メモが空なら入れない", () => {
+    expect(buildCommitShareText({ ...base, note: "  " }).trimEnd().split("\n")).toHaveLength(2);
+  });
+
+  test("長いメモは 100 文字で切って … を付ける", () => {
+    const last = buildCommitShareText({ ...base, note: "あ".repeat(150) }).trimEnd().split("\n").at(-1);
+    expect(last).toBe(`${"あ".repeat(100)}…`);
   });
 });

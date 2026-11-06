@@ -127,7 +127,7 @@ function ShareModalContent({
                     />
                     {/* TODO: X の文字数（日本語は 1 文字 2 カウント、URL は 23 カウント）で残り文字数を表示する */}
                     <p className="text-xs text-zinc-400">
-                        投稿時に memomy の URL と #memomy が付きます
+                        投稿時に memomy の URL が付きます
                     </p>
                 </div>
 

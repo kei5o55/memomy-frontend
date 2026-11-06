@@ -22,12 +22,6 @@ export type DailySummary = {
   projects: DailyProjectSummary[]; // 作業時間の長い順
 };
 
-export type CommitSummary = {
-  date: string;
-  totalMs: number;
-  project: Project;
-}
-
 // ローカル時刻の "YYYY-MM-DD"
 export function toDateKey(ms: number): string {
   const d = new Date(ms);
@@ -113,10 +107,34 @@ export function buildXIntentUrl({
 }
 
 
-//CommitModalから呼び出す共有用メッセージ作成関数
-//worksessionを受け取って整形でいいかもしれん
-export function buidlCommitShareText(summary: CommitSummary) :string {
-  return[
-    `test`,
-  ].join("\n");
+
+// 1 回分のコミット（保存前の入力内容）を共有するための情報
+export type CommitShareInput = {
+  projectName: string;
+  commitNumber: number; // 何回目のコミットか
+  durationMs: number; // 今回の作業時間
+  todayTotalMs: number; // このプロジェクトの今日の累計（今回の分を含む）
+  note: string;
+};
+
+// メモを本文に入れるときの最大文字数（X の文字数制限に収めるため）
+const MAX_NOTE_LENGTH_IN_TEXT = 100;
+
+/**
+ * コミット 1 回分の共有用本文を組み立てる（URL・ハッシュタグは Intent のパラメータで別に付ける）
+ * TODO: 進捗画像は Web Intent では添付できないため、画像付きで共有する方法を検討する
+ */
+export function buildCommitShareText(input: CommitShareInput): string {
+  const lines = [
+    `「${input.projectName}」#${input.commitNumber} の作業を記録しました`,
+    `今回 ${formatDurationJa(input.durationMs)}（今日の合計 ${formatDurationJa(input.todayTotalMs)}）`,
+  ];
+
+  const note = input.note.trim();
+  if (note) {
+    lines.push(note.length > MAX_NOTE_LENGTH_IN_TEXT ? `${note.slice(0, MAX_NOTE_LENGTH_IN_TEXT)}…` : note);
+  }
+
+  // 末尾の空行で、Intent が後ろに付ける URL と本文を分ける（buildDailyShareText と同じ）
+  return [...lines, ""].join("\n");
 }

@@ -339,7 +339,18 @@ export default function CommitModal({
           </div>
         </div>
       </div>
-      <CommitShareModal open={shareOpen} onCancel={() => {setShareOpen(false)}}></CommitShareModal>
+      <CommitShareModal
+        open={shareOpen}
+        onCancel={() => {setShareOpen(false)}}
+        commit={{
+          projectName: draft.projectName,
+          commitNumber: draft.commitNumber,
+          durationMs,
+          // タイマーから開いた場合は今回の分を含んだ値、ダイレクトコミットでは含まない値が渡ってくるため揃える
+          todayTotalMs: mode === "direct" ? draft.todayTotalMs + durationMs : draft.todayTotalMs,
+          note: draft.note,
+        }}
+      ></CommitShareModal>
     </div>
   );
 }

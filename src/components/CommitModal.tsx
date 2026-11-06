@@ -39,7 +39,7 @@ function formatMs(ms: number) {
 
 type Props = {
   open: boolean;
-  draft: DraftCommit | null;
+  draft: DraftCommit | null; // 保存前の整形用変数→worksessionからコミットを整形
   mode?: "timer" | "direct"; // ← モード判定用フラグを追加（デフォルトはtimer）
   onChange: (next: DraftCommit) => void;
 
@@ -61,6 +61,7 @@ export default function CommitModal({
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [shareOpen,setShareOpen] = useState(false);
+  
 
   const durationMs = useMemo(() => {
     if (!draft) return 0;
@@ -107,6 +108,9 @@ export default function CommitModal({
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 bg-zinc-900/50 backdrop-blur-xs grid place-items-center p-4 z-50 overflow-y-auto"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
     >
       <div className="w-full max-w-2xl bg-white rounded-2xl p-6 border border-zinc-200 shadow-xl my-8 font-sans text-zinc-800 animate-in fade-in zoom-in-95 duration-150">
         {/* ヘッダー */}
@@ -316,9 +320,9 @@ export default function CommitModal({
           <div className="flex items-center gap-2 ml-auto">
             <button 
               onClick={() => {setShareOpen(true)}}
-              className="text-sm font-semibold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-300 py-2 px-4 rounded-xl transition-colors cursor-pointer shadow-xs"
+              className="text-sm font-semibold text-white bg-sky-500 hover:bg-zinc-100 border border-zinc-300 py-2 px-4 rounded-xl transition-colors cursor-pointer shadow-xs"
             >
-              testbottun
+              Xへ共有
             </button>
               
             <button
@@ -348,6 +352,7 @@ export default function CommitModal({
           durationMs,
           // タイマーから開いた場合は今回の分を含んだ値、ダイレクトコミットでは含まない値が渡ってくるため揃える
           todayTotalMs: mode === "direct" ? draft.todayTotalMs + durationMs : draft.todayTotalMs,
+          totalMs: 900000,// プロジェクト合計を集計(いったんは仮置き（15分）)
           note: draft.note,
         }}
       ></CommitShareModal>

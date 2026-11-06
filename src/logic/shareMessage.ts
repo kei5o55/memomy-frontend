@@ -114,6 +114,7 @@ export type CommitShareInput = {
   commitNumber: number; // 何回目のコミットか
   durationMs: number; // 今回の作業時間
   todayTotalMs: number; // このプロジェクトの今日の累計（今回の分を含む）
+  totalMs: number; // 今プロジェクトの合計
   note: string;
 };
 

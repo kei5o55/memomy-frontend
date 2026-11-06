@@ -59,8 +59,8 @@ function CommitShareModalContent({ onCancel, commit }: Omit<Props, "open">) {
                         <p className="text-lg font-bold">{formatDurationJa(commit.durationMs)}</p>
                     </div>
                     <div className="rounded-xl bg-zinc-50 border border-zinc-100 p-3">
-                        <p className="text-xs text-zinc-500">今日の合計</p>
-                        <p className="text-lg font-bold">{formatDurationJa(commit.todayTotalMs)}</p>
+                        <p className="text-xs text-zinc-500">累計</p>
+                        <p className="text-lg font-bold">{formatDurationJa(commit.totalMs)}</p>
                     </div>
                 </div>
 

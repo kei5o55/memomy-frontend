@@ -126,6 +126,7 @@ describe("buildCommitShareText", () => {
     commitNumber: 3,
     durationMs: 90 * 60000,
     todayTotalMs: 135 * 60000,
+    totalMs: 600 * 60000,
     note: "線画の修正",
   };
 

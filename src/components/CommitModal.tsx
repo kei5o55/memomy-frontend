@@ -352,7 +352,8 @@ export default function CommitModal({
           durationMs,
           // タイマーから開いた場合は今回の分を含んだ値、ダイレクトコミットでは含まない値が渡ってくるため揃える
           todayTotalMs: mode === "direct" ? draft.todayTotalMs + durationMs : draft.todayTotalMs,
-          totalMs: 900000,// プロジェクト合計を集計(いったんは仮置き（15分）)
+          // プロジェクト累計も同じく、タイマーは今回の分を含み、ダイレクトコミットは含まないため揃える
+          totalMs: mode === "direct" ? draft.projectTotalMs + durationMs : draft.projectTotalMs,
           note: draft.note,
         }}
       ></CommitShareModal>

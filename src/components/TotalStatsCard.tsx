@@ -1,8 +1,9 @@
 // components/TotalStatsCard.tsx
 "use client";
 
-import { useMemo } from "react";
+import { useMemo,useState } from "react";
 import type { Commit, Project } from "../logic/types";
+import ShareModal from "./ShareModal";
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -30,6 +31,8 @@ export default function TotalStatsCard({
   projects,
   loading = false,
 }: TotalStatsCardProps) {
+  const [isOpen,setIsOpen]=useState(false);
+
   // 統計データの計算
   const stats = useMemo(() => {
     if (!commits.length) {
@@ -86,14 +89,19 @@ export default function TotalStatsCard({
           <span className="text-[11px] font-semibold text-sky-600 uppercase tracking-wider block">
             Overall Analytics
           </span>
-          <h2 className="text-base font-bold text-slate-900">全体の作業実績</h2>
+          <h2 className="text-base font-bold text-slate-900" >全体の作業実績</h2>
         </div>
+        <div className="flex items-center gap-2">
 
-        {stats.lastActiveDate && (
-          <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200/60 px-2.5 py-0.5 rounded-full">
-            最終作業: {stats.lastActiveDate}
-          </span>
-        )}
+          {stats.lastActiveDate && (
+            <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200/60 px-2.5 py-0.5 rounded-full">
+              最終作業: {stats.lastActiveDate}
+            </span>
+          )}
+          <button className="font-bold border border-slate-200 rounded-xl p-2 bg-sky-600 text-white cursor-pointer" onClick={()=>{setIsOpen(true)}}>今日の作業履歴をシェア</button>
+
+        </div>
+        
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -131,6 +139,7 @@ export default function TotalStatsCard({
           </span>
         </div>
       </div>
+      <ShareModal open={isOpen} onCancel={()=>{setIsOpen(false)}} commits={commits} projects={projects}></ShareModal>
     </section>
   );
 }

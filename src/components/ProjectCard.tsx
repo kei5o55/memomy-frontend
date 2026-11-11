@@ -53,7 +53,7 @@ export default function ProjectCard({
 
             {/* 作業時間バッジ */}
             <span className="shrink-0 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200/60">
-              ⏱️ {summary.find((s) => s.projectId === project.id)?.totalMinutes ?? 0} 分
+              ⏱️ {summary.find((s) => s.projectId === project.id)?.totalMinutes ?? 0} 分{/*apiモードのみサマリを表示。demo棟は０分と表示されるよ*/}
             </span>
           </div>
 

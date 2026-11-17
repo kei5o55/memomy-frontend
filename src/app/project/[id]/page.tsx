@@ -151,21 +151,33 @@ export default function ProjectDetailPage({
       };
   }, [commitsWithImage]);
 
-  // 最新の画像付きコミットの URL（state にせず毎回計算）
-  const lastCommit = commits.find((c) => !!c.image);
-
-  let lastCommitImageUrl: string | undefined;
-  if (lastCommit) {//画像付きコミットが見つかった時
+  // コミット画像の表示用 URL を求める（state にせず毎回計算）
+  const resolveImageUrl = (c: Commit): string | undefined => {
     // 1. Blob URL があれば優先
-    lastCommitImageUrl = imageUrls[lastCommit.id];
+    const blobUrl = imageUrls[c.id];
+    if (blobUrl) return blobUrl;
 
     // 2. なければ、文字列のパスから URL を組み立てる
-    if (!lastCommitImageUrl && isApiMode && typeof lastCommit.image === "string") {
-      lastCommitImageUrl = /^https?:\/\//.test(lastCommit.image)
-        ? lastCommit.image                // すでに完全な URL
-        : `${HOST_URL}${lastCommit.image}`; // 相対パス
+    const image: unknown = c.image;
+    if (isApiMode && typeof image === "string") {
+      return /^https?:\/\//.test(image)
+        ? image                // すでに完全な URL
+        : `${HOST_URL}${image}`; // 相対パス
     }
-  }
+    return undefined;
+  };
+
+  // 最新の画像付きコミットの URL
+  const lastCommitWithImage = commits.find((c) => !!c.image);
+  const lastCommitImageUrl = lastCommitWithImage
+    ? resolveImageUrl(lastCommitWithImage)
+    : undefined;
+
+  // 最新コミット（画像の有無を問わない）
+  const latestCommit = commits[0];
+  const latestCommitImageUrl = latestCommit?.image
+    ? resolveImageUrl(latestCommit)
+    : undefined;
 
   const totalMs = useMemo(
     () => commits.reduce((sum, c) => sum + c.durationMs, 0),
@@ -467,6 +479,49 @@ export default function ProjectDetailPage({
           </button>
         </div>
       </section>
+      
+      {/* 最新コミット情報 (リンクカード)*/}
+      {latestCommit ? (
+        <Link
+          href={`/commits/${latestCommit.id}`}
+          className="block bg-white border border-slate-200 hover:border-sky-300 rounded-2xl p-5 shadow-sm hover:shadow transition-all group"
+        >
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-bold text-slate-900 group-hover:text-sky-600 transition-colors">
+                最終コミット
+              </h2>
+              <span className="text-xs text-slate-500 tabular-nums">
+                {new Date(latestCommit.endedAt).toLocaleString()}（{formatMs(latestCommit.durationMs)}）
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              {latestCommit.image && (
+                latestCommitImageUrl ? (
+                  <img
+                    src={latestCommitImageUrl}
+                    alt="最新コミットの画像"
+                    className="w-full sm:w-40 h-40 object-cover rounded-xl border border-slate-100 shrink-0"
+                  />
+                ) : (
+                  <div className="w-full sm:w-40 h-40 bg-slate-100 rounded-xl flex items-center justify-center text-xs text-slate-400 shrink-0">
+                    Loading...
+                  </div>
+                )
+              )}
+              <p className="flex-1 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed line-clamp-6">
+                {latestCommit.note?.trim() || "（メモなし）"}
+              </p>
+            </div>
+          </section>
+        </Link>
+      ) : (
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+          <h2 className="text-base font-bold text-slate-900">最終コミット</h2>
+          <p className="text-sm text-slate-500">まだコミットがありません。</p>
+        </section>
+      )}
 
       {/* ポモドーロ */}
       <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">

@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import CommitShareModal from "./CommitShareModal";
+import { compressImage } from "../logic/image-compress";
 
 export type DraftCommitImage = {
   name: string;
@@ -43,8 +44,9 @@ type Props = {
   mode?: "timer" | "direct"; // ← モード判定用フラグを追加（デフォルトはtimer）
   onChange: (next: DraftCommit) => void;
 
-  onSave: () => void;
-  onSaveAndContinue: () => void;
+  // 保存処理が終わるまでボタンを無効化するため、Promise を返せるようにする
+  onSave: () => void | Promise<void>;
+  onSaveAndContinue: () => void | Promise<void>;
   onCancel: () => void;
   onDiscard?:()=>void;
 };
@@ -61,6 +63,23 @@ export default function CommitModal({
 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [shareOpen,setShareOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  // state の反映前に連打されても二重送信しないよう、ref でも判定する
+  const savingRef = useRef(false);
+
+  // 保存処理を実行し、終わるまで保存ボタンを押せなくする
+  // （呼び出し側は失敗時に例外を握りつぶしてモーダルを開いたままにするので、成否に関わらず finally で解除する）
+  const runSave = async (save: () => void | Promise<void>) => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await save();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  };
   
 
   const durationMs = useMemo(() => {
@@ -69,39 +88,6 @@ export default function CommitModal({
   }, [draft]);
 
   if (!open || !draft) return null;
-
-  async function compressImage(file: File): Promise<File> {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = url;
-    });
-
-    const maxWidth = 1280; // 横幅制限
-    const scale = Math.min(1, maxWidth / img.width);
-
-    const canvas = document.createElement("canvas");
-    canvas.width = img.width * scale;
-    canvas.height = img.height * scale;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Canvas not supported");
-
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    const blob: Blob = await new Promise((resolve) =>
-      canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.8)
-    );
-
-    URL.revokeObjectURL(url);
-
-    return new File([blob], file.name, {
-      type: "image/jpeg",
-    });
-  }
 
   return (
     <div
@@ -326,18 +312,20 @@ export default function CommitModal({
             </button>
               
             <button
-              onClick={onSave}
-              className="text-sm font-semibold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-300 py-2 px-4 rounded-xl transition-colors cursor-pointer shadow-xs"
+              onClick={() => void runSave(onSave)}
+              disabled={saving}
+              className="text-sm font-semibold text-zinc-700 bg-white hover:bg-zinc-100 border border-zinc-300 py-2 px-4 rounded-xl transition-colors cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
             >
-              {mode === "direct" ? "保存する" : "保存して終了"}
+              {saving ? "保存中..." : mode === "direct" ? "保存する" : "保存して終了"}
             </button>
             {/* ダイレクトコミット時は「保存して続ける（タイマー継続）」ボタンを隠す */}
             {mode === "timer" && (
               <button
-                onClick={onSaveAndContinue}
-                className="text-sm font-semibold text-white bg-sky-600 hover:bg-sky-500 active:bg-sky-700 py-2 px-4 rounded-xl transition-colors cursor-pointer shadow-xs"
+                onClick={() => void runSave(onSaveAndContinue)}
+                disabled={saving}
+                className="text-sm font-semibold text-white bg-sky-600 hover:bg-sky-500 active:bg-sky-700 py-2 px-4 rounded-xl transition-colors cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-sky-600"
               >
-                保存して続ける
+                {saving ? "保存中..." : "保存して続ける"}
               </button>
             )}
           </div>

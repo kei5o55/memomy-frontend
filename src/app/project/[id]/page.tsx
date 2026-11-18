@@ -14,6 +14,7 @@ import { use } from "react";
 
 import { HOST_URL } from "@/logic/url";
 import ArtLightbox from "@/components/minor/ArtLightbox";
+import ReferenceList from "@/components/ReferenceList"
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -48,6 +49,9 @@ export default function ProjectDetailPage({
   
   // ギャラリー用: Blobから生成した Object URL を安全に保持する State
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+
+  // 参照画像モーダル開閉用
+  const [isOpen,setIsOpen] = useState(false);
   
 
   const refresh = async () => {
@@ -448,6 +452,8 @@ export default function ProjectDetailPage({
         ) : null}
       </section>
 
+      <button className="border border-radius cursor-pointer" onClick={() => setIsOpen(true)}>参照開閉</button>
+
       <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
           <div className="overflow-hidden rounded-xl border border-slate-200">
             {lastCommitImageUrl && (
@@ -662,13 +668,15 @@ export default function ProjectDetailPage({
 
                 <div className="text-xs text-slate-400 mt-2 text-center font-medium">
         {new Date(c.endedAt).toLocaleDateString()}
-      </div>
-    </div>
-    );
-  })}
           </div>
-        )}
-      </section>
+        </div>
+        );
+        })}
+              </div>
+            )}
+        </section>
+
+      <ReferenceList open={isOpen} onClose={() => setIsOpen(false)}/>
     </main>
   );
 }

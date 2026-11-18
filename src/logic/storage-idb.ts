@@ -1,9 +1,10 @@
 import { openDB, type DBSchema } from "idb";
-import type { Project, WorkSession, Commit, CalendarMemo, DaySchedule, User} from "./types";
+import type { Project, WorkSession, Commit, CalendarMemo, DaySchedule, User, ProjectReferenceImage } from "./types";
+import { compressImage } from "./image-compress";
 import {initialuUser} from "./dummyDate";
 
 export const IDB_NAME = "worklog-db";
-export const IDB_VERSION = 4; // userProfile の id を number・snsUrls を snsLinks に変更 (3 -> 4)
+export const IDB_VERSION = 5; // referenceImages ストアを追加 (4 -> 5)
 
 export const STORE_NAMES = {
   projects: "projects",
@@ -12,7 +13,11 @@ export const STORE_NAMES = {
   calendarMemos: "calendarMemos",
   daySchedules: "daySchedules",
   userProfile: "userProfile", // 追加
+  referenceImages: "referenceImages",
 } as const;
+
+// 1 プロジェクトあたりの参考画像の上限枚数
+export const MAX_REFERENCE_IMAGES_PER_PROJECT = 10;
 
 // ユーザープロフィールの固定キー（User.id は number なのでローカルユーザーは 0 で固定）
 export const CURRENT_USER_KEY = 0;
@@ -43,6 +48,11 @@ interface WorklogDB extends DBSchema {
   userProfile: { // 追加
     key: number;
     value: User;
+  };
+  referenceImages: {
+    key: string;
+    value: ProjectReferenceImage;
+    indexes: { "by-projectId": string };
   };
 }
 
@@ -154,6 +164,11 @@ export const dbPromise =
           // 追加: userProfileストアの作成
           if (!db.objectStoreNames.contains(STORE_NAMES.userProfile)) {
             db.createObjectStore(STORE_NAMES.userProfile, { keyPath: "id" });
+          }
+          // 4 -> 5: プロジェクトの参考画像（projectId で引けるようにインデックスを張る）
+          if (!db.objectStoreNames.contains(STORE_NAMES.referenceImages)) {
+            const store = db.createObjectStore(STORE_NAMES.referenceImages, { keyPath: "id" });
+            store.createIndex("by-projectId", "projectId");
           }
           // 3 -> 4: "current_user" キーのプロフィールを number キー (0) に移し替える
           if (oldVersion === 3) {
@@ -320,7 +335,17 @@ export async function clearCalendarMemosIdb(): Promise<void> {
 export async function deleteProjectDb(id: string): Promise<void> {
   const db = await dbPromise;
   if (!db) return;
-  await db.delete(STORE_NAMES.projects, id);
+  const tx = db.transaction(
+    [STORE_NAMES.projects, STORE_NAMES.referenceImages],
+    "readwrite",
+  );
+  await tx.objectStore(STORE_NAMES.projects).delete(id);
+  // プロジェクトに紐づく参考画像も一緒に消す
+  const refIndex = tx.objectStore(STORE_NAMES.referenceImages).index("by-projectId");
+  for (const key of await refIndex.getAllKeys(id)) {
+    await tx.objectStore(STORE_NAMES.referenceImages).delete(key);
+  }
+  await tx.done;
 }
 
 
@@ -397,6 +422,91 @@ export async function clearUserProfileIdb(): Promise<void> {
   await db.clear(STORE_NAMES.userProfile);
 }
 
+// ===== Project Reference Images =====
+// 上限枚数を超えて追加しようとしたときのエラー
+export class ReferenceImageLimitError extends Error {
+  constructor() {
+    super(`参考画像は 1 プロジェクトにつき最大 ${MAX_REFERENCE_IMAGES_PER_PROJECT} 枚までです`);
+    this.name = "ReferenceImageLimitError";
+  }
+}
+
+// プロジェクトの参考画像を古い順に取得
+export async function loadReferenceImagesIdb(
+  projectId: string,
+): Promise<ProjectReferenceImage[]> {
+  const db = await dbPromise;
+  if (!db) return [];
+  const items = await db.getAllFromIndex(
+    STORE_NAMES.referenceImages,
+    "by-projectId",
+    projectId,
+  );
+  return items.sort((a, b) => a.createdAt - b.createdAt);
+}
+
+// プロジェクトの参考画像の枚数
+export async function countReferenceImagesIdb(projectId: string): Promise<number> {
+  const db = await dbPromise;
+  if (!db) return 0;
+  return db.countFromIndex(STORE_NAMES.referenceImages, "by-projectId", projectId);
+}
+
+/**
+ * 参考画像を圧縮して追加する
+ * - 上限枚数に達している場合は ReferenceImageLimitError を投げる
+ * - 圧縮（非同期の DOM 処理）はトランザクション外で先に行う
+ *   （IDB のトランザクションは IDB 以外の await を挟むと自動で閉じてしまうため）
+ */
+export async function addReferenceImageIdb(
+  projectId: string,
+  file: File,
+): Promise<ProjectReferenceImage> {
+  const db = await dbPromise;
+  if (!db) throw new Error("IndexedDB が利用できません");
+
+  // 圧縮前に枚数を確認して、無駄な圧縮処理を避ける
+  if ((await countReferenceImagesIdb(projectId)) >= MAX_REFERENCE_IMAGES_PER_PROJECT) {
+    throw new ReferenceImageLimitError();
+  }
+
+  const compressed = await compressImage(file);
+  const image: ProjectReferenceImage = {
+    id: crypto.randomUUID(),
+    projectId,
+    name: compressed.name,
+    type: compressed.type,
+    size: compressed.size,
+    blob: compressed,
+    createdAt: Date.now(),
+  };
+
+  // 圧縮中に別タブなどから追加された場合に備えて、書き込みと同じトランザクションで再確認する
+  const tx = db.transaction(STORE_NAMES.referenceImages, "readwrite");
+  const count = await tx.store.index("by-projectId").count(projectId);
+  if (count >= MAX_REFERENCE_IMAGES_PER_PROJECT) {
+    tx.abort();
+    await tx.done.catch(() => {});
+    throw new ReferenceImageLimitError();
+  }
+  await tx.store.put(image);
+  await tx.done;
+
+  return image;
+}
+
+export async function deleteReferenceImageIdb(imageId: string): Promise<void> {
+  const db = await dbPromise;
+  if (!db) return;
+  await db.delete(STORE_NAMES.referenceImages, imageId);
+}
+
+export async function clearReferenceImagesIdb(): Promise<void> {
+  const db = await dbPromise;
+  if (!db) return;
+  await db.clear(STORE_NAMES.referenceImages);
+}
+
 // ===== Global Reset =====
 export async function clearAllStorageIdb(): Promise<void> {
   const db = await dbPromise;
@@ -409,6 +519,7 @@ export async function clearAllStorageIdb(): Promise<void> {
       STORE_NAMES.calendarMemos,
       STORE_NAMES.daySchedules,
       STORE_NAMES.userProfile, // 追加
+      STORE_NAMES.referenceImages,
     ],
     "readwrite",
   );
@@ -419,6 +530,7 @@ export async function clearAllStorageIdb(): Promise<void> {
   await tx.objectStore(STORE_NAMES.calendarMemos).clear();
   await tx.objectStore(STORE_NAMES.daySchedules).clear();
   await tx.objectStore(STORE_NAMES.userProfile).clear(); // 追加
+  await tx.objectStore(STORE_NAMES.referenceImages).clear();
 
   await tx.done;
 }

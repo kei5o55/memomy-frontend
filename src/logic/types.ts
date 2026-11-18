@@ -83,6 +83,17 @@ export type Commit = {
   image?: CommitImage | null;
 };
 
+// プロジェクトごとの参考画像（IndexedDB のみに保存。API には送らない）
+export type ProjectReferenceImage = {
+  id: string;
+  projectId: string;
+  name: string;
+  type: string;
+  size: number;
+  blob: Blob;
+  createdAt: number;
+};
+
 // 日付セルに置く個人メモ
 export type CalendarMemo = {
   id: string;

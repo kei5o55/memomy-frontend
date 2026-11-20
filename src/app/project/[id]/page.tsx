@@ -14,7 +14,7 @@ import { use } from "react";
 
 import { HOST_URL } from "@/logic/url";
 import ArtLightbox from "@/components/minor/ArtLightbox";
-import ReferenceList from "@/components/ReferenceList"
+import ReferenceBoard from "@/components/ReferenceBoard"
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -54,8 +54,10 @@ export default function ProjectDetailPage({
   const [isOpen,setIsOpen] = useState(false);
   
 
+  // loading の初期値は true なので Loading 表示は初回だけ。
+  // focus 時の再読み込みで loading を true に戻すと画面ごとアンマウントされ、
+  // ファイル選択ダイアログを閉じた直後の onChange が届かなくなる（ReferenceBoard の input が消える）
   const refresh = async () => {
-    setLoading(true);
     const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
     const [nextProjects, nextCommits] = await Promise.all([
@@ -676,7 +678,7 @@ export default function ProjectDetailPage({
             )}
         </section>
 
-      <ReferenceList open={isOpen} onClose={() => setIsOpen(false)}/>
+      <ReferenceBoard projectId={projectId} open={isOpen} onClose={() => setIsOpen(false)} />
     </main>
   );
 }

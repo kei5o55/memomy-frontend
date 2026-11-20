@@ -1,34 +1,59 @@
-import {useState} from "react"
-import { loadReferenceImageIdb,addReferenceImageIdb,clearReferenceImageIdb} from "@/logic/strage-idb"
-//ローカル永続化で完結__addReferenceはprojectIdと画像ファイルを渡したらリサイズして保存してくれるよぅ
+"use client";
+
+import { useEffect, useRef } from "react";
+import type { ProjectReferenceImage } from "@/logic/types";
 
 type Props = {
-    open: boolean;
-    onClose: () => void;
+  images: ProjectReferenceImage[];
+  // 渡さなければ削除ボタンを出さない（Timerpage など閲覧専用で使う想定）
+  onDelete?: (imageId: string) => void;
+};
+
+// 参照画像を並べるリスト（ReferenceBoard と Timerpage で表示）
+export default function ReferenceList({ images, onDelete }: Props) {
+  if (images.length === 0) {
+    return <p className="text-sm text-zinc-500">参考画像はまだありません</p>;
+  }
+
+  return (
+    <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      {images.map((img) => (
+        <ReferenceItem key={img.id} image={img} onDelete={onDelete} />
+      ))}
+    </ul>
+  );
 }
 
-// 一旦テスト用でモーダル実装しているが、リストとする。コンポーネントとして制作することでprojectDetailとTimerpageで活用
-export default function ReferenceList({
-    open,
-    onClose
-}:Props){
-    if(!open) return ;
+function ReferenceItem({
+  image,
+  onDelete,
+}: {
+  image: ProjectReferenceImage;
+  onDelete?: (imageId: string) => void;
+}) {
+  const imgRef = useRef<HTMLImageElement>(null);
 
+  // Blob から object URL を作って img に設定し、アンマウント時（または blob 変更時）に解放する
+  useEffect(() => {
+    const url = URL.createObjectURL(image.blob);
+    if (imgRef.current) imgRef.current.src = url;
+    return () => URL.revokeObjectURL(url);
+  }, [image.blob]);
 
-    return (
-        <div
-            role="dialog"
-            aria-modal="true"
-            className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm rounded-2xl grid place-items-center p-4 overflow-y-auto"
-            onMouseDown={(e) => {
-                if (e.target === e.currentTarget) onClose();
-            }}
+  return (
+    <li className="group relative aspect-square overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
+      {/* blob URL のため next/image ではなく img を使う */}
+      <img ref={imgRef} alt={image.name} className="h-full w-full object-cover" />
+      {onDelete && (
+        <button
+          type="button"
+          onClick={() => onDelete(image.id)}
+          className="absolute right-1 top-1 cursor-pointer rounded-full bg-black/60 px-2 py-0.5 text-xs text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100"
+          aria-label={`${image.name} を削除`}
         >
-            <div className="w-full max-w-2xl bg-white rounded-2xl p-6 border border-zinc-200 shadow-xl my-8 font-sans text-zinc-800 animate-in fade-in zoom-in-95 duration-150">
-                一旦テスト用でモーダル実装しているが、リストとする。コンポーネントとして制作することでprojectDetailとTimerpageで活用
-
-                <button className="cursor-pointer border">画像を選択</button>
-            </div>
-        </div>
-    );
+          削除
+        </button>
+      )}
+    </li>
+  );
 }

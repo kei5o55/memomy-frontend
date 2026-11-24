@@ -5,6 +5,7 @@ import { startTransition } from 'react';
 import type { DraftCommit } from "../../../components/CommitModal";
 import CommitModal from "../../../components/CommitModal";
 import ArtLightbox from "@/components/minor/ArtLightbox";
+import  ReferenceList  from "@/components/ReferenceList";
 import {
   loadSessionsIdb,
   saveSessionsIdb,
@@ -18,6 +19,7 @@ import { useRouter } from "next/navigation";
 import type { Project, TimerMode, WorkSession,Commit } from "../../../logic/types";
 import type { NewCommitInput } from "../../../logic/api-types";
 import { HOST_URL } from "@/logic/url";
+
 
 const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 

@@ -13,10 +13,12 @@ import {
   loadCommitsIdb,
   addCommitIdb,
   clearSessionsIdb,
+  countReferenceImagesIdb,
+  loadReferenceImagesIdb,
 } from "../../../logic/storage-idb";
 import { loadProjects,loadCommits,createCommit,} from "../../../logic/api-request";
 import { useRouter } from "next/navigation";
-import type { Project, TimerMode, WorkSession,Commit } from "../../../logic/types";
+import type { Project, TimerMode, WorkSession,Commit, ProjectReferenceImage } from "../../../logic/types";
 import type { NewCommitInput } from "../../../logic/api-types";
 import { HOST_URL } from "@/logic/url";
 
@@ -66,6 +68,9 @@ export default function TimerPage({
   const [phaseStartedAt, setPhaseStartedAt] = useState<number | null>(null);
   const [completedPomodoros, setCompletedPomodoros] = useState(0);
   const [phasePausedAt, setPhasePausedAt] = useState<number | null>(null);
+  
+  //ReferenceList用画像state
+  const [images,setImages] = useState<ProjectReferenceImage[]>([]);
 
   // Blob画像のURLキャッシュ
   const [imageUrlMap,] = useState<Record<string, string>>({});
@@ -97,10 +102,11 @@ export default function TimerPage({
       try {
         const isApiMode = process.env.NEXT_PUBLIC_API_MODE === "true";
 
-        const [loadedProjects, loadedSessions, loadedCommits] = await Promise.all([
+        const [loadedProjects, loadedSessions, loadedCommits,loadedReferenceImagesIdb] = await Promise.all([
           isApiMode ? loadProjects() : loadProjectsIdb(),
           loadSessionsIdb(), // WorkSession は常時 IndexedDB から復元
           isApiMode ? loadCommits() : loadCommitsIdb(),
+          loadReferenceImagesIdb(projectId),
         ]);
 
         if (cancelled) return;
@@ -109,6 +115,7 @@ export default function TimerPage({
         setSessions(loadedSessions);
         setCommits(loadedCommits);
         setLoadedOnce(true);
+        setImages(loadedReferenceImagesIdb);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -771,6 +778,19 @@ export default function TimerPage({
           )}
         </div>
       </section>
+
+      {/*ReferenceList領域 */}
+      {/*{countReferenceImagesIdb(projectId)=== 0 ? (
+        <div className="">
+          参考画像なし
+        </div>
+
+        ここは、listの方ですでにない場合にやってるけど、良い感じに表示変えた方がいいかも
+
+
+      ) : (*/}
+        <ReferenceList images={images}></ReferenceList>
+      {/*)}*/}
 
       {/* Sessions一覧 */}
       <section>

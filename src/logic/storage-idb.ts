@@ -461,6 +461,8 @@ export async function countReferenceImagesIdb(projectId: string): Promise<number
 export async function addReferenceImageIdb(
   projectId: string,
   file: File,
+  // 楽観的 UI 更新で先に表示した仮データと同じ ID で保存したいときに渡す
+  id: string = crypto.randomUUID(),
 ): Promise<ProjectReferenceImage> {
   const db = await dbPromise;
   if (!db) throw new Error("IndexedDB が利用できません");
@@ -472,7 +474,7 @@ export async function addReferenceImageIdb(
 
   const compressed = await compressImage(file);
   const image: ProjectReferenceImage = {
-    id: crypto.randomUUID(),
+    id,
     projectId,
     name: compressed.name,
     type: compressed.type,

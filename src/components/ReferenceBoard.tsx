@@ -23,6 +23,8 @@ type Props = {
 export default function ReferenceBoard({ projectId, open, onClose }: Props) {
   const [images, setImages] = useState<ProjectReferenceImage[]>([]);
   const [busy, setBusy] = useState(false);
+  // 楽観的に表示しているが、まだ IDB に保存できていない画像の ID
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -45,29 +47,61 @@ export default function ReferenceBoard({ projectId, open, onClose }: Props) {
   }, [open, projectId]);
 
   // ファイル選択・クリップボードの両方から呼ばれる
+  // 楽観的 UI 更新：元ファイルのまま先に一覧へ出し、圧縮・IDB 保存は後から行う
   const handleFiles = async (files: FileList | File[] | null) => {
-    console.log("選択したファイル:");
     if (!files || files.length === 0) return;
-    setBusy(true);
     setError(null);
-    try {
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/")) continue;
-        const added = await addReferenceImageIdb(projectId, file);
-        setImages((prev) => [...prev, added]);
-      }
-    } catch (e) {
-      if (e instanceof ReferenceImageLimitError) {
-        setError(e.message);
-      } else {
-        console.error(e);
-        setError("画像の保存に失敗しました");
-      }
-    } finally {
-      setBusy(false);
-      // 同じファイルを続けて選んでも onChange が発火するようにリセット
-      if (inputRef.current) inputRef.current.value = "";
+
+    const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    // 同じファイルを続けて選んでも onChange が発火するようにリセット
+    if (inputRef.current) inputRef.current.value = "";
+    if (imageFiles.length === 0) return;
+
+    // 上限を超える分は最初から表示しない（IDB 側でも再チェックされる）
+    const remaining = MAX_REFERENCE_IMAGES_PER_PROJECT - images.length;
+    const targets = imageFiles.slice(0, Math.max(0, remaining));
+    if (targets.length < imageFiles.length) {
+      setError(new ReferenceImageLimitError().message);
     }
+    if (targets.length === 0) return;
+
+    const now = Date.now();
+    const optimistic: ProjectReferenceImage[] = targets.map((file, i) => ({
+      id: crypto.randomUUID(),
+      projectId,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      blob: file,
+      createdAt: now + i,
+    }));
+    setImages((prev) => [...prev, ...optimistic]);
+    setPendingIds((prev) => new Set([...prev, ...optimistic.map((img) => img.id)]));
+    setBusy(true);
+
+    for (const [i, temp] of optimistic.entries()) {
+      try {
+        // 仮データと同じ ID で保存し、圧縮後のデータに差し替える
+        const saved = await addReferenceImageIdb(projectId, targets[i], temp.id);
+        setImages((prev) => prev.map((img) => (img.id === temp.id ? saved : img)));
+      } catch (e) {
+        // 失敗した分だけ一覧から取り除く
+        setImages((prev) => prev.filter((img) => img.id !== temp.id));
+        if (e instanceof ReferenceImageLimitError) {
+          setError(e.message);
+        } else {
+          console.error(e);
+          setError("画像の保存に失敗しました");
+        }
+      } finally {
+        setPendingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(temp.id);
+          return next;
+        });
+      }
+    }
+    setBusy(false);
   };
 
   // Ctrl+V / ⌘V で貼り付けられた画像を保存する
@@ -117,13 +151,22 @@ export default function ReferenceBoard({ projectId, open, onClose }: Props) {
     }
   };
 
+  // 楽観的 UI 更新：先に一覧から消し、IDB の削除に失敗したら元の位置に戻す
   const handleDelete = async (imageId: string) => {
     setError(null);
+    const index = images.findIndex((img) => img.id === imageId);
+    if (index === -1) return;
+    const removed = images[index];
+    setImages((prev) => prev.filter((img) => img.id !== imageId));
     try {
       await deleteReferenceImageIdb(imageId);
-      setImages((prev) => prev.filter((img) => img.id !== imageId));
     } catch (e) {
       console.error(e);
+      setImages((prev) => {
+        const next = [...prev];
+        next.splice(Math.min(index, next.length), 0, removed);
+        return next;
+      });
       setError("画像の削除に失敗しました");
     }
   };
@@ -188,7 +231,7 @@ export default function ReferenceBoard({ projectId, open, onClose }: Props) {
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
         <div className="mt-4">
-          <ReferenceList images={images} onDelete={handleDelete} />
+          <ReferenceList images={images} pendingIds={pendingIds} onDelete={handleDelete} />
         </div>
       </div>
     </div>
